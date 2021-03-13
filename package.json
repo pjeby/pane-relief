@@ -1,0 +1,13 @@
+{
+  "main": "main.js",
+  "name": "pane-relief",
+  "scripts": {
+    "dev": "rollup --config rollup.config.js -w",
+    "build": "rollup --config rollup.config.js"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "obsidian-rollup-presets": "github:pjeby/obsidian-rollup-presets",
+    "rollup": "^2.38.1"
+  }
+}
