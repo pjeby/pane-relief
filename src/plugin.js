@@ -1,4 +1,4 @@
-const {Plugin, Notice, FileView, MarkdownView} = require('obsidian');
+import {Plugin} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {installHistory} from "./History";
 

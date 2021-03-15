@@ -1,4 +1,4 @@
-const {Notice, WorkspaceLeaf} = require('obsidian');
+import {Notice, WorkspaceLeaf} from 'obsidian';
 import {around} from "monkey-around";
 
 const HIST_ATTR = "pane-relief:history-v1";
