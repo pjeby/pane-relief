@@ -2,6 +2,7 @@ const {Notice, WorkspaceLeaf} = require('obsidian');
 import {around} from "monkey-around";
 
 const HIST_ATTR = "pane-relief:history-v1";
+const SERIAL_PROP = "pane-relief:history-v1";
 
 class History {
     static current(app) {
@@ -21,7 +22,6 @@ class History {
     serialize() { return {pos: this.pos, stack: this.stack}; }
 
     get state() { return this.stack[this.pos] || null; }
-    set state(state) { this.stack[this.pos] = state; }
     get length() { return this.stack.length; }
 
     back()    { this.go(-1); }
@@ -50,7 +50,7 @@ class History {
         }
     }
 
-    replaceState(state, title, url){ this.state = state; }
+    replaceState(state, title, url){ this.stack[this.pos] = state; }
 
     pushState(state, title, url)   {
         this.stack.splice(0, this.pos, state);
@@ -68,7 +68,7 @@ export function installHistory(plugin) {
     plugin.register(around(WorkspaceLeaf.prototype, {
         serialize(old) { return function serialize(){
             const result = old.call(this);
-            if (this[HIST_ATTR]) result["pane-relief:history-v1"] = this[HIST_ATTR].serialize();
+            if (this[HIST_ATTR]) result[SERIAL_PROP] = this[HIST_ATTR].serialize();
             return result;
         }}
     }));
@@ -78,7 +78,7 @@ export function installHistory(plugin) {
         deserializeLayout(old) { return async function deserializeLayout(state, ...etc){
             const result = await old.call(this, state, ...etc);
             if (state.type === "leaf") {
-                if (state["pane-relief:history-v1"]) result[HIST_ATTR] = new History(result, state["pane-relief:history-v1"]);
+                if (state[SERIAL_PROP]) result[HIST_ATTR] = new History(result, state[SERIAL_PROP]);
             }
             return result;
         }}
@@ -107,7 +107,6 @@ export function installHistory(plugin) {
     plugin.register(() => window.history = realHistory);
     Object.defineProperty(window, "history", { enumerable: true, configurable: true, writable: true, value: {
         get state()      { return History.current(app).state; },
-        set state(state) { History.current(app).state = state; },
         get length()     { return History.current(app).length; },
 
         back()    { this.go(-1); },
