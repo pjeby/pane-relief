@@ -14,7 +14,7 @@ Last, but far from least, Pane Relief saves each pane's history not only across 
 
 ### Pane Access and Movement Commands
 
-Also similar to browser tabs, Pane Relief provides some keyboard commands for jumping to specific panes and reshuffling them.  Control/Cmd+PageUp and PageDown cycle between panes, while adding Shift swaps the panes themselves (as in Firefox).  Alt+1 through Alt+8 jump to that numbered pane in the workspace, and Alt+9 jumps to the last pane.  Adding Control/Cmd moves the panes to the specified position, instead.
+Also similar to browser tabs, Pane Relief provides some keyboard commands for jumping to specific panes and reshuffling them.  Ctrl/Cmd+PageUp and PageDown cycle between panes, while adding Shift swaps the panes themselves (as in Firefox).  Alt+1 through Alt+8 jump to that numbered pane in the workspace, and Alt+9 jumps to the last pane.  Adding Ctrl/Cmd moves the panes to the specified position, instead.
 
 With these commands, you no longer need extreme dexterity to reposition panes when using the [Sliding Panes plugin](https://github.com/deathau/sliding-panes-obsidian): you can simply bump them up or down in the order, or assign them to a specific spot.  And with the numbered positions, you can easily reserve certain panes for specific documents you always need open, and then use the relevant hotkeys to jump directly to them.
 
