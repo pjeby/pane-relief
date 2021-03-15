@@ -1698,6 +1698,13 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"monkey-around@npm:^2":
+  version: 2.0.0
+  resolution: "monkey-around@npm:2.0.0"
+  checksum: c1147cfea15351a11c4b32f80ce59e977190ed44d5e8848a6f193f26d68361b5ce4cb964ce66f060dcebf93a96448b7a29b4c172aa92781b50fbfa5647a233cb
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:^3.1.20":
   version: 3.1.20
   resolution: "nanoid@npm:3.1.20"
@@ -1901,6 +1908,7 @@ fsevents@~2.1.2:
   version: 0.0.0-use.local
   resolution: "pane-relief@workspace:."
   dependencies:
+    monkey-around: ^2
     obsidian-rollup-presets: "github:pjeby/obsidian-rollup-presets"
     rollup: ^2.38.1
   languageName: unknown
