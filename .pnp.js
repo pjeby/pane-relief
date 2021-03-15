@@ -37,7 +37,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         [null, {
           "packageLocation": "./",
           "packageDependencies": [
-            ["monkey-around", "npm:2.0.0"],
+            ["monkey-around", "npm:2.1.0"],
             ["obsidian-rollup-presets", "virtual:d0f3c8cd1262ac9193735a6022b082e453f3bbc5f3058145ad639dac2ea9857142d2122bfde31f4249c8d16fe6bd79aa622edbf668102f1cef5301d5edd2057d#https://github.com/pjeby/obsidian-rollup-presets.git#commit=154ebe408bb0d64c48e464591bc5db989a4ad6ef"],
             ["rollup", "npm:2.38.1"]
           ],
@@ -2029,10 +2029,10 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]
       ]],
       ["monkey-around", [
-        ["npm:2.0.0", {
-          "packageLocation": "./.yarn/cache/monkey-around-npm-2.0.0-87fc18122a-c1147cfea1.zip/node_modules/monkey-around/",
+        ["npm:2.1.0", {
+          "packageLocation": "./.yarn/cache/monkey-around-npm-2.1.0-70df32d2ac-1bd72d25f9.zip/node_modules/monkey-around/",
           "packageDependencies": [
-            ["monkey-around", "npm:2.0.0"]
+            ["monkey-around", "npm:2.1.0"]
           ],
           "linkType": "HARD",
         }]
@@ -2272,7 +2272,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",
           "packageDependencies": [
             ["pane-relief", "workspace:."],
-            ["monkey-around", "npm:2.0.0"],
+            ["monkey-around", "npm:2.1.0"],
             ["obsidian-rollup-presets", "virtual:d0f3c8cd1262ac9193735a6022b082e453f3bbc5f3058145ad639dac2ea9857142d2122bfde31f4249c8d16fe6bd79aa622edbf668102f1cef5301d5edd2057d#https://github.com/pjeby/obsidian-rollup-presets.git#commit=154ebe408bb0d64c48e464591bc5db989a4ad6ef"],
             ["rollup", "npm:2.38.1"]
           ],
