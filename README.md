@@ -2,6 +2,8 @@
 
 This plugin adds per-pane navigation history to [Obsidian.md](https://obsidian.md), along with keyboard commands for jumping to specific panes, or moving them around.  (The plugin's name is a play on the fact that both the standard history and mouse-based pane management mechanisms can be downright "paneful" to work with when you have lots of panes, as is often the case when using the [Sliding Panes plugin](https://github.com/deathau/sliding-panes-obsidian).)
 
+(Note: this plugin adds a lot of preconfigured hotkeys.  You may want to install the [Hotkey Helper](https://github.com/pjeby/hotkey-helper#readme) plugin first, so you can easily see and resolve any conflicts, or update the keys to better suit your preferences.)
+
 ### Per-Pane Navigation History
 
 Normally, Obsidian keeps a single global history for back/forward navigation commands.  This history includes not just how you navigate within each pane, but also your navigation *between* panes.  (Which produces counterintuitive results at times, especially if you've pinned any panes in place, causing *new*, additional panes to be split off when you go "back" or "forward"!)
