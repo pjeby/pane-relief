@@ -10,8 +10,8 @@ export default class PaneRelief extends Plugin {
             [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); },
             [command("swap-next", "Swap pane with next in split",      "Mod+Shift+PageDown")] (){ return this.leafPlacer( 1); },
 
-            [command("go-next",  "Cycle to next workspace pane",       "Mod+PageUp"  )] () { return () => this.gotoNthLeaf(-1, true); },
-            [command("go-prev",  "Cycle to previous workspace pane",   "Mod+PageDown")] () { return () => this.gotoNthLeaf( 1, true); },
+            [command("go-prev",  "Cycle to previous workspace pane",   "Mod+PageUp"  )] () { return () => this.gotoNthLeaf(-1, true); },
+            [command("go-next",  "Cycle to next workspace pane",       "Mod+PageDown")] () { return () => this.gotoNthLeaf( 1, true); },
 
             [command("go-1st",   "Jump to 1st pane in the workspace",  "Alt+1")] () { return () => this.gotoNthLeaf(0); },
             [command("go-2nd",   "Jump to 2nd pane in the workspace",  "Alt+2")] () { return () => this.gotoNthLeaf(1); },
