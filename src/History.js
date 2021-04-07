@@ -79,11 +79,6 @@ export function installHistory(plugin) {
             const result = await old.call(this, state, ...etc);
             if (state.type === "leaf") {
                 if (state[SERIAL_PROP]) result[HIST_ATTR] = new History(result, state[SERIAL_PROP]);
-                if (state.active && app.workspace.rootSplit === null) {
-                    // Fix for https://forum.obsidian.md/t/active-leaf-is-saved-but-not-restored/15402
-                    app.workspace.rootSplit = result.getRoot();
-                    app.workspace.setActiveLeaf(result, false, true);
-                }
             }
             return result;
         }}
