@@ -10,7 +10,9 @@ class History {
     }
 
     static forLeaf(leaf) {
-        if (leaf) return leaf[HIST_ATTR] || (leaf[HIST_ATTR] = new this(leaf));
+        if (leaf) return leaf[HIST_ATTR] instanceof this ?
+            leaf[HIST_ATTR] :
+            leaf[HIST_ATTR] = new this(leaf, leaf[HIST_ATTR] || undefined);
     }
 
     constructor(leaf, {pos, stack} = {pos:0, stack:[]}) {
