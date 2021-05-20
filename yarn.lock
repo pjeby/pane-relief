@@ -90,6 +90,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/codemirror@npm:0.0.108":
+  version: 0.0.108
+  resolution: "@types/codemirror@npm:0.0.108"
+  dependencies:
+    "@types/tern": "*"
+  checksum: 0b66d865b168067859df7bd2c68b56c5aa85269aa61ebd2751da4c4d8fee4f0c239fbabca8ed511578dec113c89bd76b231c3e154f01488e41bbe012088d48a0
+  languageName: node
+  linkType: hard
+
 "@types/cssnano@npm:^4.0.0":
   version: 4.0.0
   resolution: "@types/cssnano@npm:4.0.0"
@@ -140,6 +149,15 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: 8e72a73574f9489760662498c1ad512a8d4084a5db15f327e0d785cb277bb0a3146cd049241a8e3268bd0ed204ad3ee7b4a6b4622ef681e70547be9af258ca6a
+  languageName: node
+  linkType: hard
+
+"@types/tern@npm:*":
+  version: 0.23.3
+  resolution: "@types/tern@npm:0.23.3"
+  dependencies:
+    "@types/estree": "*"
+  checksum: 60b406943883b329a31be6d1df9c9980688c6add3533d8ad8f8d18b5ec7829a3997e012b31e62a74be216b60b2e2678fd543bc8983da1c57fa71c831374a708f
   languageName: node
   linkType: hard
 
@@ -1698,6 +1716,13 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"moment@npm:2.29.1":
+  version: 2.29.1
+  resolution: "moment@npm:2.29.1"
+  checksum: 86729013febf7160de5b93da69273dd304d674b0224f9544b3abd09a87671ddd2cdd57598261ce57588910d63747ffd5590965e83c790d8bf327083c0e0a06e0
+  languageName: node
+  linkType: hard
+
 "monkey-around@npm:^2.1":
   version: 2.1.0
   resolution: "monkey-around@npm:2.1.0"
@@ -1869,6 +1894,16 @@ fsevents@~2.1.2:
   languageName: node
   linkType: hard
 
+"obsidian@npm:^0.12":
+  version: 0.12.2
+  resolution: "obsidian@npm:0.12.2"
+  dependencies:
+    "@types/codemirror": 0.0.108
+    moment: 2.29.1
+  checksum: af9399b761e72fc22e400612b5df1e28316e02272bfdfb9b7f7a55ff2bb70d1336a9257645fbe63275fe4488f63780719c5e49fe273deead230f0cfd5c393162
+  languageName: node
+  linkType: hard
+
 "once@npm:^1.3.0":
   version: 1.4.0
   resolution: "once@npm:1.4.0"
@@ -1909,8 +1944,10 @@ fsevents@~2.1.2:
   resolution: "pane-relief@workspace:."
   dependencies:
     monkey-around: ^2.1
+    obsidian: ^0.12
     obsidian-rollup-presets: "github:pjeby/obsidian-rollup-presets"
     rollup: ^2.38.1
+    typescript: 4.1.3
   languageName: unknown
   linkType: soft
 
@@ -2900,6 +2937,26 @@ fsevents@~2.1.2:
   version: 0.14.5
   resolution: "tweetnacl@npm:0.14.5"
   checksum: e1c9d52e2e9f582fd0df9ea26ba5a9ab88b9a38b69625d8e55c5e8870a4832ac8c32f8854b41fce7b59f97258bb103535363f9eda7050aa70e75824b972c7dde
+  languageName: node
+  linkType: hard
+
+typescript@4.1.3:
+  version: 4.1.3
+  resolution: "typescript@npm:4.1.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 4f7ab1506ea22c7a1c313ec5b4285e93ce08d709ad6086d02d3096adb399ca339972ee56d1e578213c51dd0fb7b0fad50283c2d3c39642405644458ae29774f8
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@4.1.3#builtin<compat/typescript>":
+  version: 4.1.3
+  resolution: "typescript@patch:typescript@npm%3A4.1.3#builtin<compat/typescript>::version=4.1.3&hash=cc6730"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 017af992148346e671d5b83b041773825888e9c94db8d2b9472cdbb6d6f0ee85927817473121524d319f8be6ffe5a6904d27ff6ef21356d2274fcadd52e17938
   languageName: node
   linkType: hard
 
