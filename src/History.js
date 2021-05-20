@@ -52,7 +52,15 @@ class History {
         }
     }
 
-    replaceState(state, title, url){ this.stack[this.pos] = state; }
+    replaceState(state, title, url){
+        const old = this.stack[this.pos];
+        if (old?.state && state.state !== old.state && fileOf(old) !== fileOf(state)) {
+            // replaceState was erroneously called with a new file for the same leaf;
+            // force a pushState instead (fixes the issue reported here: https://forum.obsidian.md/t/18518)
+            return this.pushState(state, title, url);
+        }
+        this.stack[this.pos] = state;
+    }
 
     pushState(state, title, url)   {
         this.stack.splice(0, this.pos, state);
@@ -61,6 +69,8 @@ class History {
         while (this.stack.length > 20) this.stack.pop();
     }
 }
+
+function fileOf(stateObj) { return JSON.parse(stateObj).state?.file; }
 
 export function installHistory(plugin) {
 
