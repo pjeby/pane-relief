@@ -1,4 +1,4 @@
-import {Menu, Component} from 'obsidian';
+import {Menu, Keymap, Component} from 'obsidian';
 
 const viewtypeIcons = {
     markdown: "document",
@@ -90,8 +90,12 @@ export class Navigator extends Component {
 
         function createItem(i, prefix="") {
             i.setIcon(info.icon).setTitle(prefix + info.title).onClick(e => {
-                my.history.go((idx+1) * my.dir);
-                // XXX should check for ctrl and split leaf + copy history
+                let history = my.history;
+                // Check for ctrl/cmd/middle button and split leaf + copy history
+                if (Keymap.isModifier(e, "Mod") || 1 === e.button) {
+                    history = history.cloneTo(my.app.workspace.splitActiveLeaf());
+                }
+                history.go((idx+1) * my.dir, true);
             });
         }
 
@@ -126,24 +130,22 @@ export class Navigator extends Component {
         }
     }
 
-    formatState(stateObj) {
-        const state = JSON.parse(stateObj.state);
-        const eState = JSON.parse(stateObj.eState);
-        const path = state.state?.file;
+    formatState(entry) {
+        const {viewState: {type, state}, eState, path} = entry;
         const file = path && this.app.vault.getAbstractFileByPath(path);
-        const info = {icon: "", title: "", file};
+        const info = {icon: "", title: "", file, type, state, eState};
 
-        if (nonFileViews[state.type]) {
-            [info.icon, info.title] = nonFileViews[state.type];
+        if (nonFileViews[type]) {
+            [info.icon, info.title] = nonFileViews[type];
         } else if (path && !file) {
             [info.icon, info.title] = ["trash", "Missing file "+path];
         } else {
-            info.icon = viewtypeIcons[state.type] ?? "document";
-            if (state.type === "markdown" && state.state.mode === "preview") info.icon = "lines-of-text";
-            info.title = file.basename + (file.extension !== "md" ? "."+file.extension : "");
+            info.icon = viewtypeIcons[type] ?? "document";
+            if (type === "markdown" && state.mode === "preview") info.icon = "lines-of-text";
+            info.title = file ? file.basename + (file.extension !== "md" ? "."+file.extension : "") : "No file";
         }
 
-        this.app.workspace.trigger("pane-relief:format-history-item", info, file, state, eState);
+        this.app.workspace.trigger("pane-relief:format-history-item", info);
         return info;
     }
 }

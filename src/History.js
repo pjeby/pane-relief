@@ -4,6 +4,55 @@ import {around} from "monkey-around";
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
 
+function parse(state) {
+    if (typeof state.state === "string") state.state = JSON.parse(state.state);
+    if (typeof state.eState === "string") state.eState = JSON.parse(state.eState);
+    return state;
+}
+
+class HistoryEntry {
+    constructor(rawState) {
+        this.setState(rawState);
+    }
+
+    setState(rawState) {
+        this.raw = rawState;
+        this.viewState = JSON.parse(rawState.state || "{}");
+        this.eState = JSON.parse(rawState.eState || "null");
+        this.path = this.viewState.state?.file;
+    }
+
+    onRename(file, oldPath) {
+        if (this.path === oldPath) {
+            this.path = this.viewState.state.file = file.path
+            this.raw.state = JSON.stringify(this.viewState);
+        }
+    }
+
+    go(leaf) {
+        let {viewState, path, eState} = this;
+        let file = path && leaf?.app?.vault.getAbstractFileByPath(path);
+        if (path && !file) {
+            new Notice("Missing file: "+path);
+            viewState = {type: "empty", state:{}};
+            eState = undefined;
+        }
+        leaf.setViewState({...viewState, active: true, popstate: true}, eState);
+    }
+
+    replaceState(rawState) {
+        if (rawState.state !== this.raw.state) {
+            const viewState = JSON.parse(rawState.state || "{}");
+            // Don't replace a file with an empty in the history
+            if (viewState.type === "empty") return true;
+            // File is different from existing file: should be a push instead
+            if (this.path && this.path !== viewState?.state?.file) return false;
+        }
+        this.setState(rawState);
+        return true;
+    }
+}
+
 export class History {
     static current(app) {
         return this.forLeaf(app.workspace.activeLeaf) || new this();
@@ -12,18 +61,26 @@ export class History {
     static forLeaf(leaf) {
         if (leaf) return leaf[HIST_ATTR] instanceof this ?
             leaf[HIST_ATTR] :
-            leaf[HIST_ATTR] = new this(leaf, leaf[HIST_ATTR] || undefined);
+            leaf[HIST_ATTR] = new this(leaf, leaf[HIST_ATTR]?.serialize() || undefined);
     }
 
     constructor(leaf, {pos, stack} = {pos:0, stack:[]}) {
         this.leaf = leaf;
         this.pos = pos;
-        this.stack = stack;
+        this.stack = stack.map(raw => new HistoryEntry(raw));
     }
 
-    serialize() { return {pos: this.pos, stack: this.stack}; }
+    cloneTo(leaf) {
+        return leaf[HIST_ATTR] = new this.constructor(leaf, this.serialize());
+    }
 
-    get state() { return this.stack[this.pos] || null; }
+    onRename(file, oldPath) {
+        for(const histEntry of this.stack) histEntry.onRename(file, oldPath);
+    }
+
+    serialize() { return {pos: this.pos, stack: this.stack.map(e => e.raw)}; }
+
+    get state() { return this.stack[this.pos].raw || null; }
     get length() { return this.stack.length; }
 
     back()    { this.go(-1); }
@@ -32,50 +89,45 @@ export class History {
     lookAhead() { return this.stack.slice(0, this.pos).reverse(); }
     lookBehind() { return this.stack.slice(this.pos+1); }
 
-    go(by) {
-        //console.log(by);
-
-        if (!this.leaf || !by) return;  // no-op
+    goto(pos) {
+        if (!this.leaf) return;
         if (this.leaf.pinned) return new Notice("Pinned pane: unpin before going forward or back"), undefined;
+        pos = this.pos = Math.max(0, Math.min(pos, this.stack.length - 1));
+        this.stack[pos]?.go(this.leaf);
+        this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
+    }
 
+    go(by, force) {
+        if (!this.leaf || !by) return;  // no-op
         // prevent wraparound
         const newPos = Math.max(0, Math.min(this.pos - by, this.stack.length - 1));
-
-        if (newPos !== this.pos) {
-            this.pos = newPos;
-            if (this.state && this.leaf) {
-                const state = JSON.parse(this.state.state || "{}");
-                const eState = JSON.parse(this.state.eState || "{}");
-                state.popstate = true;
-                state.active = true;
-                this.leaf.setViewState(state, eState);
-                this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
-            }
+        if (force || newPos !== this.pos) {
+            this.goto(newPos);
         } else {
             new Notice(`No more ${by < 0 ? "back" : "forward"} history for pane`);
         }
     }
 
-    replaceState(state, title, url){
-        const old = this.stack[this.pos];
-        if (old?.state && state.state !== old.state && fileOf(old) !== fileOf(state)) {
+    replaceState(rawState, title, url){
+        const entry = this.stack[this.pos];
+        if (!entry) {
+            this.stack[this.pos] = new HistoryEntry(rawState);
+        } else if (!entry.replaceState(rawState)) {
             // replaceState was erroneously called with a new file for the same leaf;
             // force a pushState instead (fixes the issue reported here: https://forum.obsidian.md/t/18518)
-            return this.pushState(state, title, url);
+            this.pushState(rawState, title, url);
         }
-        this.stack[this.pos] = state;
     }
 
-    pushState(state, title, url)   {
-        this.stack.splice(0, this.pos, state);
+    pushState(rawState, title, url)   {
+        console.log("pushing", rawState)
+        this.stack.splice(0, this.pos, new HistoryEntry(rawState));
         this.pos = 0;
         // Limit "back" to 20
         while (this.stack.length > 20) this.stack.pop();
         this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this)
     }
 }
-
-function fileOf(stateObj) { return JSON.parse(stateObj.state).state?.file; }
 
 export function installHistory(plugin) {
 

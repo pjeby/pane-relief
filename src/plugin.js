@@ -1,4 +1,4 @@
-import {Menu, Plugin} from 'obsidian';
+import {Menu, Plugin, TFile} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
 import {Navigator} from "./Navigator";
@@ -12,6 +12,11 @@ export default class PaneRelief extends Plugin {
         });
         this.app.workspace.onLayoutReady(() => {
             this.setupDisplay();
+            this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
+                if (file instanceof TFile) this.app.workspace.iterateAllLeaves(
+                    leaf => History.forLeaf(leaf).onRename(file, oldPath)
+                );
+            }));
             this.registerEvent(this.app.workspace.on("pane-relief:update-history", (leaf, history) => {
                 if (leaf === this.app.workspace.activeLeaf) this.display(history);
             }));
