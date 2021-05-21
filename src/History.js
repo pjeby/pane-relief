@@ -4,7 +4,7 @@ import {around} from "monkey-around";
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
 
-class History {
+export class History {
     static current(app) {
         return this.forLeaf(app.workspace.activeLeaf) || new this();
     }
@@ -29,6 +29,9 @@ class History {
     back()    { this.go(-1); }
     forward() { this.go( 1); }
 
+    lookAhead() { return this.stack.slice(0, this.pos).reverse(); }
+    lookBehind() { return this.stack.slice(this.pos+1); }
+
     go(by) {
         //console.log(by);
 
@@ -46,6 +49,7 @@ class History {
                 state.popstate = true;
                 state.active = true;
                 this.leaf.setViewState(state, eState);
+                this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
             }
         } else {
             new Notice(`No more ${by < 0 ? "back" : "forward"} history for pane`);
@@ -67,10 +71,11 @@ class History {
         this.pos = 0;
         // Limit "back" to 20
         while (this.stack.length > 20) this.stack.pop();
+        this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this)
     }
 }
 
-function fileOf(stateObj) { return JSON.parse(stateObj).state?.file; }
+function fileOf(stateObj) { return JSON.parse(stateObj.state).state?.file; }
 
 export function installHistory(plugin) {
 

@@ -1,5 +1,7 @@
 ## Pane Relief: Pane History and Management for Obsidian
 
+> New in 0.0.6: Browser-style right-click menus for the forward and back buttons in Obsidian's title bar, with optional hover previews, file submenus, file items that can be dragged to move the file, and more.
+
 This plugin adds per-pane navigation history to [Obsidian.md](https://obsidian.md), along with keyboard commands for jumping to specific panes, or moving them around.  (The plugin's name is a play on the fact that both the standard history and mouse-based pane management mechanisms can be downright "paneful" to work with when you have lots of panes, as is often the case when using the [Sliding Panes plugin](https://github.com/deathau/sliding-panes-obsidian).)
 
 (Note: this plugin adds a lot of preconfigured hotkeys.  You may want to install the [Hotkey Helper](https://github.com/pjeby/hotkey-helper#readme) plugin first, so you can easily see and resolve any conflicts, or update the keys to better suit your preferences.)

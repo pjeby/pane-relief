@@ -1,11 +1,24 @@
-import {Plugin} from 'obsidian';
+import {Menu, Plugin} from 'obsidian';
 import {addCommands, command} from "./commands";
-import {installHistory} from "./History";
+import {History, installHistory} from "./History";
+import {Navigator} from "./Navigator";
 
 export default class PaneRelief extends Plugin {
 
     onload() {
         installHistory(this);
+        this.app.workspace.registerHoverLinkSource(Navigator.hoverSource, {
+            display: 'History dropdowns', defaultMod: true
+        });
+        this.app.workspace.onLayoutReady(() => {
+            this.setupDisplay();
+            this.registerEvent(this.app.workspace.on("pane-relief:update-history", (leaf, history) => {
+                if (leaf === this.app.workspace.activeLeaf) this.display(history);
+            }));
+            this.registerEvent(this.app.workspace.on("active-leaf-change", leaf => this.display(History.forLeaf(leaf))));
+            if (this.app.workspace.activeLeaf) this.display(History.forLeaf(this.app.workspace.activeLeaf));
+        });
+
         addCommands(this, {
             [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); },
             [command("swap-next", "Swap pane with next in split",      "Mod+Shift+PageDown")] (){ return this.leafPlacer( 1); },
@@ -33,6 +46,20 @@ export default class PaneRelief extends Plugin {
             [command("put-8th",  "Place as 8th pane in the split",     "Mod+Alt+8")] () { return () => this.placeLeaf(7, false); },
             [command("put-last", "Place as last pane in the split",    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); }
         });
+    }
+
+    setupDisplay() {
+        this.addChild(this.back    = new Navigator(this.app, "back", -1));
+        this.addChild(this.forward = new Navigator(this.app, "forward", 1));
+    }
+
+    display(history) {
+        this.back.setHistory(history);
+        this.forward.setHistory(history);
+    }
+
+    onunload() {
+        this.app.workspace.unregisterHoverLinkSource(Navigator.hoverSource);
     }
 
     gotoNthLeaf(n, relative) {

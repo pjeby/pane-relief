@@ -1,0 +1,7 @@
+/* Give history counts a little breathing room, and match the title text size */
+.titlebar .history-counter { font-size: 12px; padding-left: 3px; padding-right: 3px;}
+
+/* Make the button and text more visible when you can go in that direction */
+.titlebar-button.mod-back.mod-active:not(:hover),
+.titlebar-button.mod-forward.mod-active:not(:hover)
+{ opacity: 0.75; }
