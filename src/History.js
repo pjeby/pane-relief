@@ -80,7 +80,7 @@ export class History {
 
     serialize() { return {pos: this.pos, stack: this.stack.map(e => e.raw)}; }
 
-    get state() { return this.stack[this.pos].raw || null; }
+    get state() { return this.stack[this.pos]?.raw || null; }
     get length() { return this.stack.length; }
 
     back()    { this.go(-1); }
