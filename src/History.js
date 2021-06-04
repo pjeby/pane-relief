@@ -120,7 +120,7 @@ export class History {
     }
 
     pushState(rawState, title, url)   {
-        console.log("pushing", rawState)
+        //console.log("pushing", rawState)
         this.stack.splice(0, this.pos, new HistoryEntry(rawState));
         this.pos = 0;
         // Limit "back" to 20
