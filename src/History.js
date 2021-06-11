@@ -142,15 +142,29 @@ export function installHistory(plugin) {
         }}
     }));
 
-    // Monkeypatch: load history during leaf load, if present
     plugin.register(around(app.workspace, {
+        // Monkeypatch: load history during leaf load, if present
         deserializeLayout(old) { return async function deserializeLayout(state, ...etc){
             const result = await old.call(this, state, ...etc);
             if (state.type === "leaf") {
                 if (state[SERIAL_PROP]) result[HIST_ATTR] = new History(result, state[SERIAL_PROP]);
             }
             return result;
-        }}
+        }},
+        // Monkeypatch: keep Obsidian from pushing history in setActiveLeaf
+        setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc) {
+            const unsub = around(this, {
+                recordHistory(old) { return function (leaf, _push, ...args) {
+                    // Always update state in place
+                    return old.call(this, leaf, false, ...args);
+                }; }
+            });
+            try {
+                return old.call(this, leaf, ...etc);
+            } finally {
+                unsub();
+            }
+        }},
     }));
 
     // Override default mouse history behavior.  We need this because 1) Electron will use the built-in
