@@ -92,6 +92,7 @@ export class History {
     goto(pos) {
         if (!this.leaf) return;
         if (this.leaf.pinned) return new Notice("Pinned pane: unpin before going forward or back"), undefined;
+        if (this.leaf.working) return new Notice("Pane is busy: please wait before navigating further"), undefined;
         pos = this.pos = Math.max(0, Math.min(pos, this.stack.length - 1));
         this.stack[pos]?.go(this.leaf);
         this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
