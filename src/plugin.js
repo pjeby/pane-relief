@@ -22,6 +22,8 @@ export default class PaneRelief extends Plugin {
             }));
             this.registerEvent(this.app.workspace.on("active-leaf-change", leaf => this.display(History.forLeaf(leaf))));
             if (this.app.workspace.activeLeaf) this.display(History.forLeaf(this.app.workspace.activeLeaf));
+            this.registerEvent(this.app.workspace.on("layout-change", this.numberPanes, this));
+            this.numberPanes();
         });
 
         addCommands(this, {
@@ -63,8 +65,25 @@ export default class PaneRelief extends Plugin {
         this.forward.setHistory(history);
     }
 
+    numberPanes() {
+        let count = 0, lastLeaf = null;
+        this.app.workspace.iterateRootLeaves(leaf => {
+            leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? count : "");
+            leaf.containerEl.toggleClass("has-pane-relief-label", count<9);
+            lastLeaf = leaf;
+        });
+        if (count>8) {
+            lastLeaf?.containerEl.style.setProperty("--pane-relief-label", "9");
+            lastLeaf?.containerEl.toggleClass("has-pane-relief-label", true);
+        }
+    }
+
     onunload() {
         this.app.workspace.unregisterHoverLinkSource(Navigator.hoverSource);
+        this.app.workspace.iterateRootLeaves(leaf => {
+            leaf.containerEl.style.removeProperty("--pane-relief-label");
+            leaf.containerEl.toggleClass("has-pane-relief-label", false);
+        });
     }
 
     gotoNthLeaf(n, relative) {

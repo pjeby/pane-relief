@@ -34,6 +34,26 @@ Once enabled, Pane Relief will take over managing history, but will not use or e
 
 If you encounter any problems with the plugin, please file bug reports to this repository rather than using the Obsidian forums: I don't check the forums every day (or even every week!) but I do receive email notices from Github and will get back to you much faster than I will see forum comments.
 
+### Pane Numbering
+
+To support theming and CSS snippets that may want to show pane shortcut position numbers, Pane Relief adds a class (`.has-pane-relief-label`) and a variable (`--pane-relief-label`) to the first 8 (and last) workspace leaves.  The variable gives a number that can be used with `counter-reset` and `content` to label the panes using appropriate CSS.  Here's a short CSS snippet that puts the numbers in the pane headers, and works reasonably well with the Sliding Panes plugin:
+
+```css
+/* Number panes in their headers */
+.workspace-split.mod-root .workspace-leaf .view-header-icon::before {
+    content: "";
+    display: inline-flex;
+    position: relative;
+    bottom: 3px;
+    min-inline-size: 1em;
+}
+
+.workspace-split.mod-root .workspace-leaf.has-pane-relief-label .view-header-icon::before {
+    counter-reset: pane-number var(--pane-relief-label);
+    content: counter(pane-number);
+}
+```
+
 ### Known Issues/Current Limitations
 
 #### Linked Panes
