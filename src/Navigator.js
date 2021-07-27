@@ -80,6 +80,7 @@ export class Navigator extends Component {
             // Allow popovers (hover preview) to overlay this menu
             "--layer-menu", getComputedStyle(document.body).getPropertyValue("--layer-popover")-1
         );
+        menu.dom.on("mousedown", ".menu-item", e => {e.stopPropagation();}, true);
         this.states.map(this.formatState.bind(this)).forEach(
             (info, idx) => this.menuItem(info, idx, menu)
         );
