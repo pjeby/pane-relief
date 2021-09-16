@@ -146,15 +146,14 @@ export function installHistory(plugin) {
     plugin.register(around(app.workspace, {
         // Monkeypatch: load history during leaf load, if present
         deserializeLayout(old) { return async function deserializeLayout(state, ...etc){
+            let result = await old.call(this, state, ...etc);
             if (state.type === "leaf") {
-                let {type} = state.state;
-                if (type && type !== 'empty') {
-                    const creator = this.app.viewRegistry.getViewCreatorByType(type);
-                    if (!creator) state.state.type = 'empty';
+                if (!result) {
+                    // Retry loading the pane as an empty
+                    state.state.type = 'empty';
+                    result = await old.call(this, state, ...etc);
+                    if (!result) return result;
                 }
-            }
-            const result = await old.call(this, state, ...etc);
-            if (state.type === "leaf") {
                 if (state[SERIAL_PROP]) result[HIST_ATTR] = new History(result, state[SERIAL_PROP]);
             }
             return result;
