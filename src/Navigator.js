@@ -4,6 +4,7 @@ const viewtypeIcons = {
     markdown: "document",
     image: "image-file",
     audio: "audio-file",
+    video: "audio-file",
     pdf: "pdf-file",
     localgraph: "dot-network",
     outline: "bullet-list",
@@ -12,6 +13,7 @@ const viewtypeIcons = {
     // third-party plugins
     kanban: "blocks",
     excalidraw: "excalidraw-icon",
+    "media-view": "audio-file",
 }
 
 const nonFileViews = {
@@ -147,6 +149,7 @@ export class Navigator extends Component {
             info.icon = viewtypeIcons[type] ?? "document";
             if (type === "markdown" && state.mode === "preview") info.icon = "lines-of-text";
             info.title = file ? file.basename + (file.extension !== "md" ? "."+file.extension : "") : "No file";
+            if (type === "media-view" && !file) info.title = state.info?.filename ?? info.title;
         }
 
         this.app.workspace.trigger("pane-relief:format-history-item", info);
