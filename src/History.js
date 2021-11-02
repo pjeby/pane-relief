@@ -47,6 +47,11 @@ class HistoryEntry {
             if (viewState.type === "empty") return true;
             // File is different from existing file: should be a push instead
             if (this.path && this.path !== viewState?.state?.file) return false;
+            if (viewState.type === "media-view") {
+                const oldInfo = JSON.stringify(this.viewState.state.info);
+                const newInfo = JSON.stringify(viewState.state.info);
+                if (oldInfo !== newInfo) return false;
+            }
         }
         this.setState(rawState);
         return true;
