@@ -1,4 +1,5 @@
 import {Menu, Keymap, Component} from 'obsidian';
+import {History} from "./History";
 
 const viewtypeIcons = {
     markdown: "document",
@@ -32,9 +33,10 @@ export class Navigator extends Component {
 
     static hoverSource = "pane-relief:history-menu";
 
-    constructor(app, kind, dir)  {
+    constructor(plugin, kind, dir)  {
         super();
-        this.app = app;
+        this.plugin = plugin;
+        this.app = plugin.app;
         this.kind = kind;
         this.dir = dir;
     }
@@ -64,7 +66,7 @@ export class Navigator extends Component {
         else this.containerEl.removeAttribute("aria-label");
     }
 
-    setHistory(history) {
+    setHistory(history = History.current(this.app)) {
         this.history = history;
         const states = this.states = history[this.dir < 0 ? "lookBehind" : "lookAhead"].call(history);
         this.setCount(states.length);
@@ -87,6 +89,8 @@ export class Navigator extends Component {
             (info, idx) => this.menuItem(info, idx, menu)
         );
         menu.showAtPosition({x: evt.clientX, y: evt.clientY + 20});
+        this.plugin.historyIsOpen = true;
+        menu.onHide(() => { this.plugin.historyIsOpen = false; this.setHistory(); });
     }
 
     menuItem(info, idx, menu) {

@@ -56,11 +56,15 @@ export default class PaneRelief extends Plugin {
     }
 
     setupDisplay() {
-        this.addChild(this.back    = new Navigator(this.app, "back", -1));
-        this.addChild(this.forward = new Navigator(this.app, "forward", 1));
+        this.addChild(this.back    = new Navigator(this, "back", -1));
+        this.addChild(this.forward = new Navigator(this, "forward", 1));
     }
 
+    // Set to true while either menu is open, so we don't switch it out
+    historyIsOpen = false;
+
     display(history) {
+        if (this.historyIsOpen) return;
         this.back.setHistory(history);
         this.forward.setHistory(history);
     }
