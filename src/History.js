@@ -4,6 +4,8 @@ import {around} from "monkey-around";
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
 
+const domLeaves = new WeakMap();
+
 function parse(state) {
     if (typeof state.state === "string") state.state = JSON.parse(state.state);
     if (typeof state.eState === "string") state.eState = JSON.parse(state.eState);
@@ -64,6 +66,7 @@ export class History {
     }
 
     static forLeaf(leaf) {
+        if (leaf) domLeaves.set(leaf.containerEl, leaf);
         if (leaf) return leaf[HIST_ATTR] instanceof this ?
             leaf[HIST_ATTR] :
             leaf[HIST_ATTR] = new this(leaf, leaf[HIST_ATTR]?.serialize() || undefined);
@@ -189,8 +192,9 @@ export function installHistory(plugin) {
         e.preventDefault(); e.stopPropagation();  // prevent default behavior
         const target = e.target.matchParent(".workspace-leaf");
         if (target) {
-            let leaf;
-            app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
+            let leaf = domLeaves.get(target);
+            if (!leaf) app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
+            if (!leaf) return false;
             if (e.button == 3) { History.forLeaf(leaf).back(); }
             if (e.button == 4) { History.forLeaf(leaf).forward(); }
         }
