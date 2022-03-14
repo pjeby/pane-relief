@@ -69,9 +69,22 @@ export default class PaneRelief extends Plugin {
         this.forward.setHistory(history);
     }
 
+    iterateRootLeaves(cb) {
+        if (this.app.workspace.iterateRootLeaves(cb)) return true;
+
+        // Support Hover Editors
+        const popovers = this.app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
+        if (popovers) for (const popover of popovers) {
+            if (popover.leaf && cb(popover.leaf)) return true;
+            if (popover.rootSplit && this.app.workspace.iterateLeaves(cb, popover.rootSplit)) return true;
+        }
+
+        return false;
+    }
+
     numberPanes() {
         let count = 0, lastLeaf = null;
-        this.app.workspace.iterateRootLeaves(leaf => {
+        this.iterateRootLeaves(leaf => {
             leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? count : "");
             leaf.containerEl.toggleClass("has-pane-relief-label", count<9);
             lastLeaf = leaf;
@@ -84,7 +97,7 @@ export default class PaneRelief extends Plugin {
 
     onunload() {
         this.app.workspace.unregisterHoverLinkSource(Navigator.hoverSource);
-        this.app.workspace.iterateRootLeaves(leaf => {
+        this.iterateRootLeaves(leaf => {
             leaf.containerEl.style.removeProperty("--pane-relief-label");
             leaf.containerEl.toggleClass("has-pane-relief-label", false);
         });
@@ -92,7 +105,7 @@ export default class PaneRelief extends Plugin {
 
     gotoNthLeaf(n, relative) {
         const leaves = [];
-        this.app.workspace.iterateRootLeaves((leaf) => (leaves.push(leaf), false));
+        this.iterateRootLeaves((leaf) => (leaves.push(leaf), false));
         if (relative) {
             n += leaves.indexOf(this.app.workspace.activeLeaf);
             n = (n + leaves.length) % leaves.length;  // wrap around
