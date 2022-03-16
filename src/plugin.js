@@ -1,4 +1,5 @@
-import {Menu, Plugin, TFile} from 'obsidian';
+import { around } from 'monkey-around';
+import {Plugin, TFile, WorkspaceLeaf} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
 import {Navigator} from "./Navigator";
@@ -25,6 +26,19 @@ export default class PaneRelief extends Plugin {
             this.registerEvent(this.app.workspace.on("layout-change", this.numberPanes, this));
             this.numberPanes();
         });
+
+        this.register(around(WorkspaceLeaf.prototype, {
+            // Workaround for https://github.com/obsidianmd/obsidian-api/issues/47
+            setEphemeralState(old) { return function(state){
+                if (state?.focus) {
+                    const {activeElement} = document;
+                    if (activeElement instanceof Node && !this.containerEl.contains(activeElement)) {
+                        activeElement.blur?.();
+                    }
+                }
+                return old.call(this, state);
+            }}
+        }));
 
         addCommands(this, {
             [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); },
