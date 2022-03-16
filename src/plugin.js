@@ -75,6 +75,8 @@ export default class PaneRelief extends Plugin {
         // Support Hover Editors
         const popovers = this.app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
         if (popovers) for (const popover of popovers) {
+            // More recent plugin: we can skip the scan
+            if (popover.constructor.iteratePopoverLeaves) return false;
             if (popover.leaf && cb(popover.leaf)) return true;
             if (popover.rootSplit && this.app.workspace.iterateLeaves(cb, popover.rootSplit)) return true;
         }
