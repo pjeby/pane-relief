@@ -87,7 +87,7 @@ export class Navigator extends Component {
         );
         menu.showAtPosition({x: evt.clientX, y: evt.clientY + 20});
         this.plugin.historyIsOpen = true;
-        menu.onHide(() => { this.plugin.historyIsOpen = false; this.setHistory(); });
+        menu.onHide(() => { this.plugin.historyIsOpen = false; this.plugin.display(); });
     }
 
     menuItem(info, idx, menu) {
@@ -158,7 +158,7 @@ export class Navigator extends Component {
     }
 }
 
-function onElement(el, event, selector, callback, options) {
+export function onElement(el, event, selector, callback, options) {
     el.on(event, selector, callback, options)
     return () => el.off(event, selector, callback, options);
 }

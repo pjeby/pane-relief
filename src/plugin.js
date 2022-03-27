@@ -2,12 +2,14 @@ import { around } from 'monkey-around';
 import {Plugin, TFile, WorkspaceLeaf} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
-import {Navigator} from "./Navigator";
+import {Navigator, onElement} from "./Navigator";
 
 export default class PaneRelief extends Plugin {
 
     onload() {
         installHistory(this);
+        this.leafMap = new WeakMap();
+
         this.app.workspace.registerHoverLinkSource(Navigator.hoverSource, {
             display: 'History dropdowns', defaultMod: true
         });
@@ -19,12 +21,29 @@ export default class PaneRelief extends Plugin {
                 );
             }));
             this.registerEvent(this.app.workspace.on("pane-relief:update-history", (leaf, history) => {
+                this.updateLeaf(leaf);
                 if (leaf === this.app.workspace.activeLeaf) this.display(history);
             }));
             this.registerEvent(this.app.workspace.on("active-leaf-change", leaf => this.display(History.forLeaf(leaf))));
             if (this.app.workspace.activeLeaf) this.display(History.forLeaf(this.app.workspace.activeLeaf));
             this.registerEvent(this.app.workspace.on("layout-change", this.numberPanes, this));
             this.numberPanes();
+            this.register(
+                onElement(
+                    document.body, "contextmenu", ".view-header > .view-actions > .view-action", (evt, target) => {
+                        const nav = (
+                            (target.matches('[class*=" app:go-forward"]') && this.forward) ||
+                            (target.matches('[class*=" app:go-back"]')    && this.back)
+                        );
+                        if (!nav) return;
+                        const leaf = this.leafMap.get(target.matchParent(".workspace-leaf"));
+                        if (!leaf) return;
+                        this.display(History.forLeaf(leaf));
+                        nav.openMenu(evt);
+                        this.display();
+                    }, {capture: true}
+                )
+            );
         });
 
         this.register(around(WorkspaceLeaf.prototype, {
@@ -77,7 +96,7 @@ export default class PaneRelief extends Plugin {
     // Set to true while either menu is open, so we don't switch it out
     historyIsOpen = false;
 
-    display(history) {
+    display(history = History.forLeaf(this.app.workspace.activeLeaf)) {
         if (this.historyIsOpen) return;
         this.back.setHistory(history);
         this.forward.setHistory(history);
@@ -98,6 +117,13 @@ export default class PaneRelief extends Plugin {
         return false;
     }
 
+    updateLeaf(leaf) {
+        const history = History.forLeaf(leaf);
+        leaf.containerEl.style.setProperty("--pane-relief-forward-count", '"'+(history.lookAhead().length || "")+'"');
+        leaf.containerEl.style.setProperty("--pane-relief-backward-count", '"'+(history.lookBehind().length || "")+'"');
+        this.leafMap.set(leaf.containerEl, leaf);
+    }
+
     numberPanes() {
         let count = 0, lastLeaf = null;
         this.iterateRootLeaves(leaf => {
@@ -109,6 +135,7 @@ export default class PaneRelief extends Plugin {
             lastLeaf?.containerEl.style.setProperty("--pane-relief-label", "9");
             lastLeaf?.containerEl.toggleClass("has-pane-relief-label", true);
         }
+        this.app.workspace.iterateAllLeaves(leaf => this.updateLeaf(leaf));
     }
 
     onunload() {
@@ -117,6 +144,10 @@ export default class PaneRelief extends Plugin {
             leaf.containerEl.style.removeProperty("--pane-relief-label");
             leaf.containerEl.toggleClass("has-pane-relief-label", false);
         });
+        this.app.workspace.iterateAllLeaves(leaf => {
+            leaf.containerEl.style.removeProperty("--pane-relief-forward-count");
+            leaf.containerEl.style.removeProperty("--pane-relief-backward-count");
+        })
     }
 
     gotoNthLeaf(n, relative) {
