@@ -143,11 +143,18 @@ export function installHistory(plugin) {
     const app = plugin.app;
 
     // Monkeypatch: include history in leaf serialization (so it's persisted with the workspace)
+    // and check for popstate events (to suppress them)
     plugin.register(around(WorkspaceLeaf.prototype, {
         serialize(old) { return function serialize(){
             const result = old.call(this);
             if (this[HIST_ATTR]) result[SERIAL_PROP] = this[HIST_ATTR].serialize();
             return result;
+        }},
+        setViewState(old) { return function setViewState(vs, es){
+            if (vs.popstate && window.event?.type === "popstate") {
+                return Promise.resolve();
+            }
+            return old.call(this, vs, es);
         }}
     }));
 
@@ -186,12 +193,16 @@ export function installHistory(plugin) {
     // history object if we don't (instead of our wrapper), and 2) we want the click to apply to the leaf
     // that was under the mouse, rather than whichever leaf was active.
     window.addEventListener("mouseup", historyHandler, true);
-    plugin.register( () => window.removeEventListener("mouseup", historyHandler, true) );
+    window.addEventListener("mousedown", historyHandler, true);
+    plugin.register(() => {
+        window.removeEventListener("mouseup", historyHandler, true);
+        window.removeEventListener("mousedown", historyHandler, true);
+    });
     function historyHandler(e) {
         if (e.button !== 3 && e.button !== 4) return;
         e.preventDefault(); e.stopPropagation();  // prevent default behavior
         const target = e.target.matchParent(".workspace-leaf");
-        if (target) {
+        if (target && e.type === "mouseup") {
             let leaf = domLeaves.get(target);
             if (!leaf) app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
             if (!leaf) return false;
