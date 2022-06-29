@@ -192,11 +192,9 @@ export function installHistory(plugin) {
     // Override default mouse history behavior.  We need this because 1) Electron will use the built-in
     // history object if we don't (instead of our wrapper), and 2) we want the click to apply to the leaf
     // that was under the mouse, rather than whichever leaf was active.
-    window.addEventListener("mouseup", historyHandler, true);
-    window.addEventListener("mousedown", historyHandler, true);
+    document.addEventListener("mouseup", historyHandler, true);
     plugin.register(() => {
-        window.removeEventListener("mouseup", historyHandler, true);
-        window.removeEventListener("mousedown", historyHandler, true);
+        document.removeEventListener("mouseup", historyHandler, true);
     });
     function historyHandler(e) {
         if (e.button !== 3 && e.button !== 4) return;
