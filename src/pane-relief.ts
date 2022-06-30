@@ -1,15 +1,53 @@
 import { around } from 'monkey-around';
-import {Plugin, TFile, WorkspaceLeaf} from 'obsidian';
+import {Plugin, TFile, WorkspaceLeaf, WorkspaceSplit, WorkspaceTabs} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
 import {Navigator, onElement} from "./Navigator";
 
+declare module "obsidian" {
+    interface Workspace {
+        on(type: "pane-relief:update-history", callback: (leaf: WorkspaceLeaf, history: History) => any, ctx?: any): EventRef;
+        registerHoverLinkSource(source: string, info: {display: string, defaultMod?: boolean}): void
+        unregisterHoverLinkSource(source: string): void
+        iterateLeaves(callback: (item: WorkspaceLeaf) => unknown, item: WorkspaceParent): boolean;
+        onLayoutChange(): void
+    }
+    interface App {
+        plugins: {
+            plugins: {
+                "obsidian-hover-editor": {
+                    activePopovers: HoverPopover[]
+                }
+            }
+        }
+    }
+    interface WorkspaceItem {
+        containerEl: HTMLDivElement
+    }
+    interface WorkspaceParent {
+        children: WorkspaceItem[]
+        recomputeChildrenDimensions(): void
+    }
+    interface WorkspaceTabs extends WorkspaceParent {
+        selectTab(leaf: WorkspaceLeaf): void
+    }
+    interface WorkspaceLeaf {
+        parentSplit: WorkspaceParent
+    }
+    interface HoverPopover {
+        leaf?: WorkspaceLeaf
+        rootSplit?: WorkspaceSplit
+    }
+}
+
 export default class PaneRelief extends Plugin {
+
+    leafMap = new WeakMap()
+    back: Navigator
+    forward: Navigator
 
     onload() {
         installHistory(this);
-        this.leafMap = new WeakMap();
-
         this.app.workspace.registerHoverLinkSource(Navigator.hoverSource, {
             display: 'History dropdowns', defaultMod: true
         });
@@ -45,19 +83,6 @@ export default class PaneRelief extends Plugin {
                 )
             );
         });
-
-        this.register(around(WorkspaceLeaf.prototype, {
-            // Workaround for https://github.com/obsidianmd/obsidian-api/issues/47
-            setEphemeralState(old) { return function(state){
-                if (state?.focus) {
-                    const {activeElement} = document;
-                    if (activeElement instanceof Node && !this.containerEl.contains(activeElement)) {
-                        activeElement.blur?.();
-                    }
-                }
-                return old.call(this, state);
-            }}
-        }));
 
         addCommands(this, {
             [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); },
@@ -102,14 +127,14 @@ export default class PaneRelief extends Plugin {
         this.forward.setHistory(history);
     }
 
-    iterateRootLeaves(cb) {
-        if (this.app.workspace.iterateRootLeaves(cb)) return true;
+    iterateRootLeaves(cb: (leaf: WorkspaceLeaf) => void | boolean) {
+        this.app.workspace.iterateRootLeaves(cb);
 
         // Support Hover Editors
         const popovers = this.app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
         if (popovers) for (const popover of popovers) {
             // More recent plugin: we can skip the scan
-            if (popover.constructor.iteratePopoverLeaves) return false;
+            if ((popover.constructor as any).iteratePopoverLeaves) return false;
             if (popover.leaf && cb(popover.leaf)) return true;
             if (popover.rootSplit && this.app.workspace.iterateLeaves(cb, popover.rootSplit)) return true;
         }
@@ -117,7 +142,7 @@ export default class PaneRelief extends Plugin {
         return false;
     }
 
-    updateLeaf(leaf) {
+    updateLeaf(leaf: WorkspaceLeaf) {
         const history = History.forLeaf(leaf);
         leaf.containerEl.style.setProperty("--pane-relief-forward-count", '"'+(history.lookAhead().length || "")+'"');
         leaf.containerEl.style.setProperty("--pane-relief-backward-count", '"'+(history.lookBehind().length || "")+'"');
@@ -125,9 +150,9 @@ export default class PaneRelief extends Plugin {
     }
 
     numberPanes() {
-        let count = 0, lastLeaf = null;
+        let count = 0, lastLeaf: WorkspaceLeaf = null;
         this.iterateRootLeaves(leaf => {
-            leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? count : "");
+            leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? ""+count : "");
             leaf.containerEl.toggleClass("has-pane-relief-label", count<9);
             lastLeaf = leaf;
         });
@@ -150,8 +175,8 @@ export default class PaneRelief extends Plugin {
         })
     }
 
-    gotoNthLeaf(n, relative) {
-        const leaves = [];
+    gotoNthLeaf(n: number, relative: boolean) {
+        const leaves: WorkspaceLeaf[] = [];
         this.iterateRootLeaves((leaf) => (leaves.push(leaf), false));
         if (relative) {
             n += leaves.indexOf(this.app.workspace.activeLeaf);
@@ -161,12 +186,12 @@ export default class PaneRelief extends Plugin {
         !leaf || this.app.workspace.setActiveLeaf(leaf, true, true);
     }
 
-    placeLeaf(toPos, relative=true) {
+    placeLeaf(toPos: number, relative=true) {
         const cb = this.leafPlacer(toPos, relative);
         if (cb) cb();
     }
 
-    leafPlacer(toPos, relative=true) {
+    leafPlacer(toPos: number, relative=true) {
         const leaf = this.app.workspace.activeLeaf;
         if (!leaf) return false;
 
@@ -191,8 +216,8 @@ export default class PaneRelief extends Plugin {
             const other = children[toPos];
             children.splice(fromPos, 1);
             children.splice(toPos,   0, leaf);
-            if (parentSplit.selectTab) {
-                parentSplit.selectTab(leaf);
+            if ((parentSplit as WorkspaceTabs).selectTab) {
+                (parentSplit as WorkspaceTabs).selectTab(leaf);
             } else {
                 other.containerEl.insertAdjacentElement(fromPos > toPos ? "beforebegin" : "afterend", leaf.containerEl);
                 parentSplit.recomputeChildrenDimensions();

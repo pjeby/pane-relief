@@ -1,39 +1,67 @@
-import {Notice, WorkspaceLeaf} from 'obsidian';
+import {Notice, TAbstractFile, ViewState, WorkspaceLeaf} from 'obsidian';
 import {around} from "monkey-around";
+import PaneRelief from "./pane-relief";
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
 
-const domLeaves = new WeakMap();
+declare module "obsidian" {
+    interface Workspace {
+        deserializeLayout(state: any, ...etc: any[]): Promise<WorkspaceItem>
+    }
 
-function parse(state) {
-    if (typeof state.state === "string") state.state = JSON.parse(state.state);
-    if (typeof state.eState === "string") state.eState = JSON.parse(state.eState);
-    return state;
+    interface WorkspaceLeaf {
+        [HIST_ATTR]: History
+        pinned: boolean
+        working: boolean
+        serialize(): any
+    }
+
+    interface ViewState {
+        popstate?: boolean
+    }
 }
 
-class HistoryEntry {
-    constructor(rawState) {
+
+const domLeaves = new WeakMap();
+
+interface PushState {
+    state: string
+    eState: string
+}
+
+export class HistoryEntry {
+
+    raw: PushState
+    eState: any
+    path: string
+
+    constructor(rawState: PushState) {
         this.setState(rawState);
     }
 
-    setState(rawState) {
+
+    get viewState() {
+        return JSON.parse(this.raw.state || "{}")
+    }
+
+    setState(rawState: PushState) {
         this.raw = rawState;
-        this.viewState = JSON.parse(rawState.state || "{}");
         this.eState = JSON.parse(rawState.eState || "null");
         this.path = this.viewState.state?.file;
     }
 
-    onRename(file, oldPath) {
+    onRename(file: TAbstractFile, oldPath: string) {
         if (this.path === oldPath) {
-            this.path = this.viewState.state.file = file.path
-            this.raw.state = JSON.stringify(this.viewState);
+            const viewState = this.viewState
+            this.path = viewState.state.file = file.path
+            this.raw.state = JSON.stringify(viewState);
         }
     }
 
-    go(leaf) {
+    go(leaf?: WorkspaceLeaf) {
         let {viewState, path, eState} = this;
-        let file = path && leaf?.app?.vault.getAbstractFileByPath(path);
+        let file = path && app?.vault.getAbstractFileByPath(path);
         if (path && !file) {
             new Notice("Missing file: "+path);
             viewState = {type: "empty", state:{}};
@@ -42,7 +70,7 @@ class HistoryEntry {
         leaf.setViewState({...viewState, active: true, popstate: true}, eState);
     }
 
-    replaceState(rawState) {
+    replaceState(rawState: PushState) {
         if (rawState.state !== this.raw.state) {
             const viewState = JSON.parse(rawState.state || "{}");
             // Don't replace a file with an empty in the history
@@ -60,33 +88,41 @@ class HistoryEntry {
     }
 }
 
+interface SerializableHistory {
+    pos: number
+    stack: PushState[]
+}
+
 export class History {
-    static current(app) {
+    static current() {
         return this.forLeaf(app.workspace.activeLeaf) || new this();
     }
 
-    static forLeaf(leaf) {
+    static forLeaf(leaf: WorkspaceLeaf) {
         if (leaf) domLeaves.set(leaf.containerEl, leaf);
         if (leaf) return leaf[HIST_ATTR] instanceof this ?
             leaf[HIST_ATTR] :
             leaf[HIST_ATTR] = new this(leaf, leaf[HIST_ATTR]?.serialize() || undefined);
     }
 
-    constructor(leaf, {pos, stack} = {pos:0, stack:[]}) {
+    pos: number
+    stack: HistoryEntry[]
+
+    constructor(public leaf?: WorkspaceLeaf, {pos, stack}: SerializableHistory = {pos:0, stack:[]}) {
         this.leaf = leaf;
         this.pos = pos;
         this.stack = stack.map(raw => new HistoryEntry(raw));
     }
 
-    cloneTo(leaf) {
-        return leaf[HIST_ATTR] = new this.constructor(leaf, this.serialize());
+    cloneTo(leaf: WorkspaceLeaf) {
+        return leaf[HIST_ATTR] = new History(leaf, this.serialize());
     }
 
-    onRename(file, oldPath) {
+    onRename(file: TAbstractFile, oldPath: string) {
         for(const histEntry of this.stack) histEntry.onRename(file, oldPath);
     }
 
-    serialize() { return {pos: this.pos, stack: this.stack.map(e => e.raw)}; }
+    serialize(): SerializableHistory { return {pos: this.pos, stack: this.stack.map(e => e.raw)}; }
 
     get state() { return this.stack[this.pos]?.raw || null; }
     get length() { return this.stack.length; }
@@ -97,16 +133,16 @@ export class History {
     lookAhead() { return this.stack.slice(0, this.pos).reverse(); }
     lookBehind() { return this.stack.slice(this.pos+1); }
 
-    goto(pos) {
+    goto(pos: number): void {
         if (!this.leaf) return;
         if (this.leaf.pinned) return new Notice("Pinned pane: unpin before going forward or back"), undefined;
         if (this.leaf.working) return new Notice("Pane is busy: please wait before navigating further"), undefined;
         pos = this.pos = Math.max(0, Math.min(pos, this.stack.length - 1));
         this.stack[pos]?.go(this.leaf);
-        this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
+        app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
     }
 
-    go(by, force) {
+    go(by: number, force?: boolean) {
         if (!this.leaf || !by) return;  // no-op
         // prevent wraparound
         const newPos = Math.max(0, Math.min(this.pos - by, this.stack.length - 1));
@@ -117,7 +153,7 @@ export class History {
         }
     }
 
-    replaceState(rawState, title, url){
+    replaceState(rawState: PushState, title: string, url: string){
         const entry = this.stack[this.pos];
         if (!entry) {
             this.stack[this.pos] = new HistoryEntry(rawState);
@@ -128,19 +164,17 @@ export class History {
         }
     }
 
-    pushState(rawState, title, url)   {
+    pushState(rawState: PushState, title: string, url: string)   {
         //console.log("pushing", rawState)
         this.stack.splice(0, this.pos, new HistoryEntry(rawState));
         this.pos = 0;
         // Limit "back" to 20
         while (this.stack.length > 20) this.stack.pop();
-        this.leaf.app?.workspace?.trigger("pane-relief:update-history", this.leaf, this)
+        app?.workspace?.trigger("pane-relief:update-history", this.leaf, this)
     }
 }
 
-export function installHistory(plugin) {
-
-    const app = plugin.app;
+export function installHistory(plugin: PaneRelief) {
 
     // Monkeypatch: include history in leaf serialization (so it's persisted with the workspace)
     // and check for popstate events (to suppress them)
@@ -160,7 +194,7 @@ export function installHistory(plugin) {
 
     plugin.register(around(app.workspace, {
         // Monkeypatch: load history during leaf load, if present
-        deserializeLayout(old) { return async function deserializeLayout(state, ...etc){
+        deserializeLayout(old) { return async function deserializeLayout(state, ...etc: any[]){
             let result = await old.call(this, state, ...etc);
             if (state.type === "leaf") {
                 if (!result) {
@@ -176,7 +210,7 @@ export function installHistory(plugin) {
         // Monkeypatch: keep Obsidian from pushing history in setActiveLeaf
         setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc) {
             const unsub = around(this, {
-                recordHistory(old) { return function (leaf, _push, ...args) {
+                recordHistory(old) { return function (leaf: WorkspaceLeaf, _push: boolean, ...args: any[]) {
                     // Always update state in place
                     return old.call(this, leaf, false, ...args);
                 }; }
@@ -196,10 +230,10 @@ export function installHistory(plugin) {
     plugin.register(() => {
         document.removeEventListener("mouseup", historyHandler, true);
     });
-    function historyHandler(e) {
+    function historyHandler(e: MouseEvent) {
         if (e.button !== 3 && e.button !== 4) return;
         e.preventDefault(); e.stopPropagation();  // prevent default behavior
-        const target = e.target.matchParent(".workspace-leaf");
+        const target = (e.target as HTMLElement).matchParent(".workspace-leaf");
         if (target && e.type === "mouseup") {
             let leaf = domLeaves.get(target);
             if (!leaf) app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
@@ -212,17 +246,17 @@ export function installHistory(plugin) {
 
     // Proxy the window history with a wrapper that delegates to the active leaf's History object,
     const realHistory = window.history;
-    plugin.register(() => window.history = realHistory);
+    plugin.register(() => (window as any).history = realHistory);
     Object.defineProperty(window, "history", { enumerable: true, configurable: true, writable: true, value: {
-        get state()      { return History.current(app).state; },
-        get length()     { return History.current(app).length; },
+        get state()      { return History.current().state; },
+        get length()     { return History.current().length; },
 
         back()    { this.go(-1); },
         forward() { this.go( 1); },
-        go(by)    { History.current(app).go(by); },
+        go(by: number)    { History.current().go(by); },
 
-        replaceState(state, title, url){ History.current(app).replaceState(state, title, url); },
-        pushState(state, title, url)   { History.current(app).pushState(state, title, url); },
+        replaceState(state: PushState, title: string, url: string){ History.current().replaceState(state, title, url); },
+        pushState(state: PushState, title: string, url: string)   { History.current().pushState(state, title, url); },
 
         get scrollRestoration()    { return realHistory.scrollRestoration; },
         set scrollRestoration(val) { realHistory.scrollRestoration = val; },
