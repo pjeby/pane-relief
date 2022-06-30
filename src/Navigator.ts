@@ -1,6 +1,7 @@
-import {Menu, Keymap, Component, WorkspaceLeaf, TFile, TAbstractFile, MenuItem} from 'obsidian';
+import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem} from 'obsidian';
 import {History, HistoryEntry} from "./History";
 import PaneRelief from './pane-relief';
+import {PerWindowComponent} from './PerWindowComponent';
 
 declare module "obsidian" {
     interface Menu {
@@ -17,6 +18,9 @@ declare module "obsidian" {
         onDragStart(event: DragEvent, dragData: DragData): void
     }
     interface DragData {}
+    interface Workspace {
+        getMostRecentLeaf(root?: WorkspaceParent): WorkspaceLeaf
+    }
 }
 
 interface FileInfo {
@@ -57,31 +61,92 @@ const nonFileViews: Record<string, string[]> = {
     empty: ["cross", "No file"]
 }
 
+export class Navigation extends PerWindowComponent<PaneRelief> {
+    back: Navigator
+    forward: Navigator
+    // Set to true while either menu is open, so we don't switch it out
+    historyIsOpen = false;
+
+    display(leaf = this.latestLeaf()) {
+        if (this.historyIsOpen) return;
+        if (!this._loaded) { this.load(); return; }
+        const history = leaf ? History.forLeaf(leaf) : new History();
+        this.back.setHistory(history);
+        this.forward.setHistory(history);
+    }
+
+    latestLeaf() {
+        let leaf = app.workspace.activeLeaf;
+        if (leaf && this.plugin.nav.forLeaf(leaf) === this) return leaf;
+        return app.workspace.getMostRecentLeaf(this.root);
+    }
+
+    onload() {
+        app.workspace.onLayoutReady(() => {
+            this.addChild(this.back    = new Navigator(this, "back", -1));
+            this.addChild(this.forward = new Navigator(this, "forward", 1));
+            this.display();
+            this.register(
+                // Support "Customizable Page Header and Title Bar" buttons
+                onElement(
+                    this.win.document.body,
+                    "contextmenu",
+                    ".view-header > .view-actions > .view-action",
+                    (evt, target) => {
+                        const dir = (
+                            (target.matches('[class*=" app:go-forward"]') && "forward") ||
+                            (target.matches('[class*=" app:go-back"]')    && "back")
+                        );
+                        if (!dir) return;
+                        const leaf = this.plugin.leafMap.get(target.matchParent(".workspace-leaf"));
+                        if (!leaf) return;
+                        evt.preventDefault();
+                        evt.stopImmediatePropagation();
+                        this.display(leaf);
+                        this[dir].openMenu(evt);
+                    }, {capture: true}
+                )
+            );
+        });
+    }
+}
+
 export class Navigator extends Component {
 
     static hoverSource = "pane-relief:history-menu";
 
     containerEl: HTMLElement
     count: HTMLSpanElement
-    leaf: WorkspaceLeaf = null;
     history: History = null;
     states: HistoryEntry[];
     oldLabel: string
 
-    constructor(public plugin: PaneRelief, public kind: string, public dir: number)  {
+    constructor(public owner: Navigation, public kind: 'forward'|'back', public dir: number)  {
         super();
     }
 
     onload() {
-        this.containerEl = document.body.find(
+        this.containerEl = this.owner.win.document.body.find(
             `.titlebar .titlebar-button-container.mod-left .titlebar-button.mod-${this.kind}`
         );
         this.count = this.containerEl.createSpan({prepend: this.kind === "back", cls: "history-counter"});
-        this.leaf = null;
         this.history = null;
         this.states = [];
         this.oldLabel = this.containerEl.getAttribute("aria-label");
         this.registerDomEvent(this.containerEl, "contextmenu", this.openMenu.bind(this));
+        const onClick = (e: MouseEvent) => {
+            // Don't allow Obsidian to switch window or forward the event
+            e.preventDefault(); e.stopImmediatePropagation();
+            // Do the navigation
+            this.history?.[this.kind]();
+        }
+        this.register(() => this.containerEl.removeEventListener("click", onClick, true));
+        this.containerEl.addEventListener("click", onClick, true);
+        this.registerEvent(
+            app.workspace.on("pane-relief:update-history", (_, history) => {
+                if (history === this.history) this.setHistory(history);
+            })
+        );
     }
 
     onunload() {
@@ -117,8 +182,8 @@ export class Navigator extends Component {
             (info: FileInfo, idx) => this.menuItem(info, idx, menu)
         );
         menu.showAtPosition({x: evt.clientX, y: evt.clientY + 20});
-        this.plugin.historyIsOpen = true;
-        menu.onHide(() => { this.plugin.historyIsOpen = false; this.plugin.display(); });
+        this.owner.historyIsOpen = true;
+        menu.onHide(() => { this.owner.historyIsOpen = false; this.owner.display(); });
     }
 
     menuItem(info: FileInfo, idx: number, menu: Menu) {

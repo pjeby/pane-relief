@@ -133,13 +133,17 @@ export class History {
     lookAhead() { return this.stack.slice(0, this.pos).reverse(); }
     lookBehind() { return this.stack.slice(this.pos+1); }
 
+    announce() {
+        app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
+    }
+
     goto(pos: number): void {
         if (!this.leaf) return;
         if (this.leaf.pinned) return new Notice("Pinned pane: unpin before going forward or back"), undefined;
         if (this.leaf.working) return new Notice("Pane is busy: please wait before navigating further"), undefined;
         pos = this.pos = Math.max(0, Math.min(pos, this.stack.length - 1));
         this.stack[pos]?.go(this.leaf);
-        app?.workspace?.trigger("pane-relief:update-history", this.leaf, this);
+        this.announce();
     }
 
     go(by: number, force?: boolean) {
@@ -170,7 +174,7 @@ export class History {
         this.pos = 0;
         // Limit "back" to 20
         while (this.stack.length > 20) this.stack.pop();
-        app?.workspace?.trigger("pane-relief:update-history", this.leaf, this)
+        this.announce();
     }
 }
 

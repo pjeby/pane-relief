@@ -1,8 +1,8 @@
-import { around } from 'monkey-around';
 import {Plugin, TFile, WorkspaceLeaf, WorkspaceSplit, WorkspaceTabs} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
-import {Navigator, onElement} from "./Navigator";
+import {Navigation, Navigator, onElement} from "./Navigator";
+import {WindowManager} from './PerWindowComponent';
 
 declare module "obsidian" {
     interface Workspace {
@@ -43,8 +43,7 @@ declare module "obsidian" {
 export default class PaneRelief extends Plugin {
 
     leafMap = new WeakMap()
-    back: Navigator
-    forward: Navigator
+    nav = new WindowManager(this, Navigation).watch();
 
     onload() {
         installHistory(this);
@@ -52,36 +51,19 @@ export default class PaneRelief extends Plugin {
             display: 'History dropdowns', defaultMod: true
         });
         this.app.workspace.onLayoutReady(() => {
-            this.setupDisplay();
             this.registerEvent(this.app.vault.on("rename", (file, oldPath) => {
                 if (file instanceof TFile) this.app.workspace.iterateAllLeaves(
                     leaf => History.forLeaf(leaf).onRename(file, oldPath)
                 );
             }));
-            this.registerEvent(this.app.workspace.on("pane-relief:update-history", (leaf, history) => {
-                this.updateLeaf(leaf);
-                if (leaf === this.app.workspace.activeLeaf) this.display(history);
-            }));
-            this.registerEvent(this.app.workspace.on("active-leaf-change", leaf => this.display(History.forLeaf(leaf))));
-            if (this.app.workspace.activeLeaf) this.display(History.forLeaf(this.app.workspace.activeLeaf));
+            this.registerEvent(
+                app.workspace.on("active-leaf-change", (leaf: WorkspaceLeaf) => this.nav.forLeaf(leaf).display(leaf))
+            );
+            this.registerEvent(
+                app.workspace.on("pane-relief:update-history", (leaf: WorkspaceLeaf) => this.updateLeaf(leaf))
+            );
             this.registerEvent(this.app.workspace.on("layout-change", this.numberPanes, this));
             this.numberPanes();
-            this.register(
-                onElement(
-                    document.body, "contextmenu", ".view-header > .view-actions > .view-action", (evt, target) => {
-                        const nav = (
-                            (target.matches('[class*=" app:go-forward"]') && this.forward) ||
-                            (target.matches('[class*=" app:go-back"]')    && this.back)
-                        );
-                        if (!nav) return;
-                        const leaf = this.leafMap.get(target.matchParent(".workspace-leaf"));
-                        if (!leaf) return;
-                        this.display(History.forLeaf(leaf));
-                        nav.openMenu(evt);
-                        this.display();
-                    }, {capture: true}
-                )
-            );
         });
 
         addCommands(this, {
@@ -111,20 +93,6 @@ export default class PaneRelief extends Plugin {
             [command("put-8th",  "Place as 8th pane in the split",     "Mod+Alt+8")] () { return () => this.placeLeaf(7, false); },
             [command("put-last", "Place as last pane in the split",    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); }
         });
-    }
-
-    setupDisplay() {
-        this.addChild(this.back    = new Navigator(this, "back", -1));
-        this.addChild(this.forward = new Navigator(this, "forward", 1));
-    }
-
-    // Set to true while either menu is open, so we don't switch it out
-    historyIsOpen = false;
-
-    display(history = History.forLeaf(this.app.workspace.activeLeaf)) {
-        if (this.historyIsOpen) return;
-        this.back.setHistory(history);
-        this.forward.setHistory(history);
     }
 
     iterateRootLeaves(cb: (leaf: WorkspaceLeaf) => void | boolean) {
