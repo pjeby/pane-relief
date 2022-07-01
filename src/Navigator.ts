@@ -96,7 +96,7 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
     latestLeaf() {
         let leaf = app.workspace.activeLeaf;
         if (leaf && this.plugin.nav.forLeaf(leaf) === this) return leaf;
-        return this.leaves().reduce((best, leaf)=>{ return (!best || best.activeTime < leaf.activeTime) ? leaf : best; });
+        return this.leaves().reduce((best, leaf)=>{ return (!best || best.activeTime < leaf.activeTime) ? leaf : best; }, null);
     }
 
     onload() {
