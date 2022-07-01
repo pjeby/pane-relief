@@ -37,12 +37,12 @@ declare module "obsidian" {
     interface HoverPopover {
         leaf?: WorkspaceLeaf
         rootSplit?: WorkspaceSplit
+        hoverEl: HTMLElement
     }
 }
 
 export default class PaneRelief extends Plugin {
 
-    leafMap = new WeakMap()
     nav = new WindowManager(this, Navigation).watch();
 
     onload() {
@@ -57,13 +57,11 @@ export default class PaneRelief extends Plugin {
                 );
             }));
             this.registerEvent(
-                app.workspace.on("active-leaf-change", (leaf: WorkspaceLeaf) => this.nav.forLeaf(leaf).display(leaf))
+                app.workspace.on("active-leaf-change", leaf => this.nav.forLeaf(leaf).display(leaf))
             );
             this.registerEvent(
-                app.workspace.on("pane-relief:update-history", (leaf: WorkspaceLeaf) => this.updateLeaf(leaf))
+                app.workspace.on("pane-relief:update-history", (leaf, history) => this.nav.forLeaf(leaf).onUpdateHistory(leaf, history))
             );
-            this.registerEvent(this.app.workspace.on("layout-change", this.numberPanes, this));
-            this.numberPanes();
         });
 
         addCommands(this, {
@@ -72,6 +70,9 @@ export default class PaneRelief extends Plugin {
 
             [command("go-prev",  "Cycle to previous workspace pane",   "Mod+PageUp"  )] () { return () => this.gotoNthLeaf(-1, true); },
             [command("go-next",  "Cycle to next workspace pane",       "Mod+PageDown")] () { return () => this.gotoNthLeaf( 1, true); },
+
+            [command("win-prev", "Cycle to previous window", [] )] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(-1, true); },
+            [command("win-next", "Cycle to next window",     [] )] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow( 1, true); },
 
             [command("go-1st",   "Jump to 1st pane in the workspace",  "Alt+1")] () { return () => this.gotoNthLeaf(0); },
             [command("go-2nd",   "Jump to 2nd pane in the workspace",  "Alt+2")] () { return () => this.gotoNthLeaf(1); },
@@ -82,6 +83,16 @@ export default class PaneRelief extends Plugin {
             [command("go-7th",   "Jump to 7th pane in the workspace",  "Alt+7")] () { return () => this.gotoNthLeaf(6); },
             [command("go-8th",   "Jump to 8th pane in the workspace",  "Alt+8")] () { return () => this.gotoNthLeaf(7); },
             [command("go-last",  "Jump to last pane in the workspace", "Alt+9")] () { return () => this.gotoNthLeaf(99999999); },
+
+            [command("win-1st",   "Switch to 1st window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(0); },
+            [command("win-2nd",   "Switch to 2nd window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(1); },
+            [command("win-3rd",   "Switch to 3rd window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(2); },
+            [command("win-4th",   "Switch to 4th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(3); },
+            [command("win-5th",   "Switch to 5th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(4); },
+            [command("win-6th",   "Switch to 6th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(5); },
+            [command("win-7th",   "Switch to 7th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(6); },
+            [command("win-8th",   "Switch to 8th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(7); },
+            [command("win-last",  "Switch to last window", [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(99999999); },
 
             [command("put-1st",  "Place as 1st pane in the split",     "Mod+Alt+1")] () { return () => this.placeLeaf(0, false); },
             [command("put-2nd",  "Place as 2nd pane in the split",     "Mod+Alt+2")] () { return () => this.placeLeaf(1, false); },
@@ -95,63 +106,21 @@ export default class PaneRelief extends Plugin {
         });
     }
 
-    iterateRootLeaves(cb: (leaf: WorkspaceLeaf) => void | boolean) {
-        this.app.workspace.iterateRootLeaves(cb);
-
-        // Support Hover Editors
-        const popovers = this.app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
-        if (popovers) for (const popover of popovers) {
-            // More recent plugin: we can skip the scan
-            if ((popover.constructor as any).iteratePopoverLeaves) return false;
-            if (popover.leaf && cb(popover.leaf)) return true;
-            if (popover.rootSplit && this.app.workspace.iterateLeaves(cb, popover.rootSplit)) return true;
-        }
-
-        return false;
-    }
-
-    updateLeaf(leaf: WorkspaceLeaf) {
-        const history = History.forLeaf(leaf);
-        leaf.containerEl.style.setProperty("--pane-relief-forward-count", '"'+(history.lookAhead().length || "")+'"');
-        leaf.containerEl.style.setProperty("--pane-relief-backward-count", '"'+(history.lookBehind().length || "")+'"');
-        this.leafMap.set(leaf.containerEl, leaf);
-    }
-
-    numberPanes() {
-        let count = 0, lastLeaf: WorkspaceLeaf = null;
-        this.iterateRootLeaves(leaf => {
-            leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? ""+count : "");
-            leaf.containerEl.toggleClass("has-pane-relief-label", count<9);
-            lastLeaf = leaf;
-        });
-        if (count>8) {
-            lastLeaf?.containerEl.style.setProperty("--pane-relief-label", "9");
-            lastLeaf?.containerEl.toggleClass("has-pane-relief-label", true);
-        }
-        this.app.workspace.iterateAllLeaves(leaf => this.updateLeaf(leaf));
-    }
-
     onunload() {
         this.app.workspace.unregisterHoverLinkSource(Navigator.hoverSource);
-        this.iterateRootLeaves(leaf => {
-            leaf.containerEl.style.removeProperty("--pane-relief-label");
-            leaf.containerEl.toggleClass("has-pane-relief-label", false);
-        });
-        this.app.workspace.iterateAllLeaves(leaf => {
-            leaf.containerEl.style.removeProperty("--pane-relief-forward-count");
-            leaf.containerEl.style.removeProperty("--pane-relief-backward-count");
-        })
     }
 
     gotoNthLeaf(n: number, relative: boolean) {
-        const leaves: WorkspaceLeaf[] = [];
-        this.iterateRootLeaves((leaf) => (leaves.push(leaf), false));
-        if (relative) {
-            n += leaves.indexOf(this.app.workspace.activeLeaf);
-            n = (n + leaves.length) % leaves.length;  // wrap around
-        }
-        const leaf = leaves[n>=leaves.length ? leaves.length-1 : n];
+        const nav = this.nav.forLeaf(app.workspace.activeLeaf);
+        const leaf = gotoNth(nav.leaves(), this.app.workspace.activeLeaf, n, relative);
         !leaf || this.app.workspace.setActiveLeaf(leaf, true, true);
+    }
+
+    gotoNthWindow(n: number, relative: boolean) {
+        const nav = gotoNth(this.nav.forAll(), this.nav.forLeaf(app.workspace.activeLeaf), n, relative);
+        const leaf = nav?.latestLeaf();
+        if (leaf) app.workspace.setActiveLeaf(leaf, true, true);
+        (nav?.win as any).require?.('electron')?.remote?.getCurrentWindow()?.focus();
     }
 
     placeLeaf(toPos: number, relative=true) {
@@ -200,3 +169,10 @@ export default class PaneRelief extends Plugin {
     }
 }
 
+function gotoNth<T>(items: T[], current: T, n: number, relative: boolean): T {
+    if (relative) {
+        n += items.indexOf(current);
+        n = (n + items.length) % items.length;  // wrap around
+    }
+    return items[n >= items.length ? items.length-1 : n];
+}

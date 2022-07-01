@@ -18,8 +18,8 @@ declare module "obsidian" {
         onDragStart(event: DragEvent, dragData: DragData): void
     }
     interface DragData {}
-    interface Workspace {
-        getMostRecentLeaf(root?: WorkspaceParent): WorkspaceLeaf
+    interface WorkspaceLeaf {
+        activeTime: number
     }
 }
 
@@ -75,10 +75,25 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
         this.forward.setHistory(history);
     }
 
+    leaves() {
+        const leaves: WorkspaceLeaf[] = [];
+        const cb = (leaf: WorkspaceLeaf) => { leaves.push(leaf); };
+        app.workspace.iterateLeaves(cb, this.root);
+
+        // Support Hover Editors
+        const popovers = app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
+        if (popovers) for (const popover of popovers) {
+            if (popover.hoverEl.ownerDocument.defaultView !== this.win) continue; // must be in same window
+            else if (popover.rootSplit) app.workspace.iterateLeaves(cb, popover.rootSplit);
+            else if (popover.leaf) cb(popover.leaf);
+        }
+        return leaves;
+    }
+
     latestLeaf() {
         let leaf = app.workspace.activeLeaf;
         if (leaf && this.plugin.nav.forLeaf(leaf) === this) return leaf;
-        return app.workspace.getMostRecentLeaf(this.root);
+        return this.leaves().reduce((best, leaf)=>{ return (!best || best.activeTime < leaf.activeTime) ? leaf : best; });
     }
 
     onload() {
@@ -86,6 +101,8 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
             this.addChild(this.back    = new Navigator(this, "back", -1));
             this.addChild(this.forward = new Navigator(this, "forward", 1));
             this.display();
+            this.numberPanes();
+            this.registerEvent(app.workspace.on("layout-change", this.numberPanes, this));
             this.register(
                 // Support "Customizable Page Header and Title Bar" buttons
                 onElement(
@@ -98,7 +115,8 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
                             (target.matches('[class*=" app:go-back"]')    && "back")
                         );
                         if (!dir) return;
-                        const leaf = this.plugin.leafMap.get(target.matchParent(".workspace-leaf"));
+                        const el = target.matchParent(".workspace-leaf");
+                        const leaf = this.leaves().filter(leaf => leaf.containerEl === el).pop();
                         if (!leaf) return;
                         evt.preventDefault();
                         evt.stopImmediatePropagation();
@@ -108,6 +126,49 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
                 )
             );
         });
+    }
+
+    onunload() {
+        this.unNumberPanes();
+    }
+
+    unNumberPanes(selector = ".workspace-leaf") {
+        this.win.document.body.findAll(selector).forEach(el => {
+            el.style.removeProperty("--pane-relief-label");
+            el.toggleClass("has-pane-relief-label", false);
+            el.style.removeProperty("--pane-relief-forward-count");
+            el.style.removeProperty("--pane-relief-backward-count");
+        });
+    }
+
+    updateLeaf(leaf: WorkspaceLeaf) {
+        const history = History.forLeaf(leaf);
+        leaf.containerEl.style.setProperty("--pane-relief-forward-count", '"'+(history.lookAhead().length || "")+'"');
+        leaf.containerEl.style.setProperty("--pane-relief-backward-count", '"'+(history.lookBehind().length || "")+'"');
+    }
+
+    numberPanes() {
+        window.requestAnimationFrame(() => {
+            // unnumber sidebar panes in main window, if something was moved there
+            if (this.win === window) this.unNumberPanes(".workspace-tabs > .workspace-leaf");
+            let count = 0, lastLeaf: WorkspaceLeaf = null;
+            this.leaves().forEach(leaf => {
+                leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? ""+count : "");
+                leaf.containerEl.toggleClass("has-pane-relief-label", count<9);
+                lastLeaf = leaf;
+                this.updateLeaf(leaf);
+            });
+            if (count>8) {
+                lastLeaf?.containerEl.style.setProperty("--pane-relief-label", "9");
+                lastLeaf?.containerEl.toggleClass("has-pane-relief-label", true);
+            }
+        })
+    }
+
+    onUpdateHistory(leaf: WorkspaceLeaf, history: History) {
+        this.updateLeaf(leaf); // update leaf stats
+        if (history === this.forward.history) this.forward.setHistory(history);  // update nav arrows
+        if (history === this.back.history)    this.back.setHistory(history);
     }
 }
 
@@ -142,11 +203,6 @@ export class Navigator extends Component {
         }
         this.register(() => this.containerEl.removeEventListener("click", onClick, true));
         this.containerEl.addEventListener("click", onClick, true);
-        this.registerEvent(
-            app.workspace.on("pane-relief:update-history", (_, history) => {
-                if (history === this.history) this.setHistory(history);
-            })
-        );
     }
 
     onunload() {

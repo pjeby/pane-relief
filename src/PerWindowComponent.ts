@@ -1,4 +1,4 @@
-import { Component, Plugin, View, WorkspaceLeaf, WorkspaceParent, WorkspaceWindow } from "obsidian";
+import { Component, Plugin, View, WorkspaceLeaf, WorkspaceParent, WorkspaceSplit, WorkspaceWindow } from "obsidian";
 
 /**
  * Component that belongs to a plugin + window. e.g.:
@@ -24,7 +24,7 @@ import { Component, Plugin, View, WorkspaceLeaf, WorkspaceParent, WorkspaceWindo
  */
 export class PerWindowComponent<P extends Plugin> extends Component {
 
-    constructor(public plugin: P, public win: Window, public root: WorkspaceWindow) {
+    constructor(public plugin: P, public win: Window, public root: WorkspaceWindow | WorkspaceSplit) {
         super();
     }
 
