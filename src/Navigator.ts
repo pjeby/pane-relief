@@ -1,5 +1,5 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem} from 'obsidian';
-import {History, HistoryEntry} from "./History";
+import {domLeaves, History, HistoryEntry} from "./History";
 import PaneRelief from './pane-relief';
 import {PerWindowComponent} from './PerWindowComponent';
 
@@ -100,6 +100,31 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
     }
 
     onload() {
+        // Override default mouse history behavior.  We need this because 1) Electron will use the built-in
+        // history object if we don't (instead of our wrapper), and 2) we want the click to apply to the leaf
+        // that was under the mouse, rather than whichever leaf was active.
+        const {document} = this.win;
+        document.addEventListener("mouseup", historyHandler, true);
+        document.addEventListener("mousedown", historyHandler, true);
+        this.register(() => {
+            document.removeEventListener("mouseup", historyHandler, true);
+            document.removeEventListener("mousedown", historyHandler, true);
+        });
+        function historyHandler(e: MouseEvent) {
+            if (e.button !== 3 && e.button !== 4) return;
+            debugger
+            e.preventDefault(); e.stopPropagation();  // prevent default behavior
+            const target = (e.target as HTMLElement).matchParent(".workspace-leaf");
+            if (target && e.type === "mouseup") {
+                let leaf = domLeaves.get(target);
+                if (!leaf) app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
+                if (!leaf) return false;
+                if (e.button == 3) { History.forLeaf(leaf).back(); }
+                if (e.button == 4) { History.forLeaf(leaf).forward(); }
+            }
+            return false;
+        }
+
         app.workspace.onLayoutReady(() => {
             this.addChild(this.back    = new Navigator(this, "back", -1));
             this.addChild(this.forward = new Navigator(this, "forward", 1));

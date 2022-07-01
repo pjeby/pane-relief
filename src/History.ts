@@ -23,7 +23,7 @@ declare module "obsidian" {
 }
 
 
-const domLeaves = new WeakMap();
+export const domLeaves = new WeakMap();
 
 interface PushState {
     state: string
@@ -227,27 +227,6 @@ export function installHistory(plugin: PaneRelief) {
         }},
     }));
 
-    // Override default mouse history behavior.  We need this because 1) Electron will use the built-in
-    // history object if we don't (instead of our wrapper), and 2) we want the click to apply to the leaf
-    // that was under the mouse, rather than whichever leaf was active.
-    document.addEventListener("mouseup", historyHandler, true);
-    plugin.register(() => {
-        document.removeEventListener("mouseup", historyHandler, true);
-    });
-    function historyHandler(e: MouseEvent) {
-        if (e.button !== 3 && e.button !== 4) return;
-        e.preventDefault(); e.stopPropagation();  // prevent default behavior
-        const target = (e.target as HTMLElement).matchParent(".workspace-leaf");
-        if (target && e.type === "mouseup") {
-            let leaf = domLeaves.get(target);
-            if (!leaf) app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
-            if (!leaf) return false;
-            if (e.button == 3) { History.forLeaf(leaf).back(); }
-            if (e.button == 4) { History.forLeaf(leaf).forward(); }
-        }
-        return false;
-    }
-
     // Proxy the window history with a wrapper that delegates to the active leaf's History object,
     const realHistory = window.history;
     plugin.register(() => (window as any).history = realHistory);
@@ -255,8 +234,8 @@ export function installHistory(plugin: PaneRelief) {
         get state()      { return History.current().state; },
         get length()     { return History.current().length; },
 
-        back()    { this.go(-1); },
-        forward() { this.go( 1); },
+        back()    { if (!plugin.isSyntheticHistoryEvent(3)) this.go(-1); },
+        forward() { if (!plugin.isSyntheticHistoryEvent(4)) this.go( 1); },
         go(by: number)    { History.current().go(by); },
 
         replaceState(state: PushState, title: string, url: string){ History.current().replaceState(state, title, url); },

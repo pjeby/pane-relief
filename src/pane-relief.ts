@@ -166,6 +166,18 @@ export default class PaneRelief extends Plugin {
             }
         }
     }
+
+    isSyntheticHistoryEvent(button: number) {
+        const win = this.nav.windows().filter(win =>
+            win.event && (win.event as MouseEvent).button === button
+        ).pop();
+        if (win && win.event.type === "mousedown") {
+            win.event.preventDefault();
+            win.event.stopImmediatePropagation();
+            return true;
+        }
+        return false;
+    }
 }
 
 function gotoNth<T>(items: T[], current: T, n: number, relative: boolean): T {
