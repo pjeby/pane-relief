@@ -1,7 +1,10 @@
 import {Plugin, TFile, WorkspaceTabs} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
+import { Maximizer } from './maximizing';
 import {Navigation, Navigator, onElement} from "./Navigator";
+
+import "./styles.scss";
 
 declare module "obsidian" {
     interface Workspace {
@@ -43,6 +46,7 @@ declare module "obsidian" {
 export default class PaneRelief extends Plugin {
 
     nav = Navigation.perWindow(this).watch();
+    max = this.addChild(new Maximizer);
 
     onload() {
         installHistory(this);
@@ -101,7 +105,11 @@ export default class PaneRelief extends Plugin {
             [command("put-6th",  "Place as 6th pane in the split",     "Mod+Alt+6")] () { return () => this.placeLeaf(5, false); },
             [command("put-7th",  "Place as 7th pane in the split",     "Mod+Alt+7")] () { return () => this.placeLeaf(6, false); },
             [command("put-8th",  "Place as 8th pane in the split",     "Mod+Alt+8")] () { return () => this.placeLeaf(7, false); },
-            [command("put-last", "Place as last pane in the split",    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); }
+            [command("put-last", "Place as last pane in the split",    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); },
+
+            [command("maximize", "Maximize active pane (Toggle)", [])] () {
+                if (this.max.parentFor(app.workspace.activeLeaf)) return () => this.max.toggleMaximize();
+            },
         });
     }
 

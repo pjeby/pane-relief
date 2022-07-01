@@ -74,7 +74,7 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
             const history = leaf ? History.forLeaf(leaf) : new History();
             this.back.setHistory(history);
             this.forward.setHistory(history);
-            this.updateLeaf(leaf, history)
+            if (leaf) this.updateLeaf(leaf, history)
         });
     }
 
@@ -112,7 +112,6 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
         });
         function historyHandler(e: MouseEvent) {
             if (e.button !== 3 && e.button !== 4) return;
-            debugger
             e.preventDefault(); e.stopPropagation();  // prevent default behavior
             const target = (e.target as HTMLElement).matchParent(".workspace-leaf");
             if (target && e.type === "mouseup") {
