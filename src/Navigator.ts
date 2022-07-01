@@ -70,9 +70,12 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
     display(leaf = this.latestLeaf()) {
         if (this.historyIsOpen) return;
         if (!this._loaded) { this.load(); return; }
-        const history = leaf ? History.forLeaf(leaf) : new History();
-        this.back.setHistory(history);
-        this.forward.setHistory(history);
+        this.win.requestAnimationFrame(() => {
+            const history = leaf ? History.forLeaf(leaf) : new History();
+            this.back.setHistory(history);
+            this.forward.setHistory(history);
+            this.updateLeaf(leaf, history)
+        });
     }
 
     leaves() {
@@ -130,6 +133,14 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
 
     onunload() {
         this.unNumberPanes();
+        this.win.document.body.findAll(".workspace-leaf").forEach(leafEl => {
+            // Restore CPHATB button labels
+            const actions = leafEl.find(".view-header > .view-actions");
+            const fwd = actions?.find('.view-action[class*=" app:go-forward"]');
+            const back = actions?.find('.view-action[class*=" app:go-back"]');
+            if (fwd)  setTooltip(fwd, this.forward.oldLabel);
+            if (back) setTooltip(fwd, this.back.oldLabel);
+        })
     }
 
     unNumberPanes(selector = ".workspace-leaf") {
@@ -141,14 +152,20 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
         });
     }
 
-    updateLeaf(leaf: WorkspaceLeaf) {
-        const history = History.forLeaf(leaf);
+    updateLeaf(leaf: WorkspaceLeaf, history: History = History.forLeaf(leaf)) {
         leaf.containerEl.style.setProperty("--pane-relief-forward-count", '"'+(history.lookAhead().length || "")+'"');
         leaf.containerEl.style.setProperty("--pane-relief-backward-count", '"'+(history.lookBehind().length || "")+'"');
+
+        // Add labels for CPHATB nav buttons
+        const actions = leaf.containerEl.find(".view-header > .view-actions");
+        const fwd = actions?.find('.view-action[class*=" app:go-forward"]');
+        const back = actions?.find('.view-action[class*=" app:go-back"]');
+        if (fwd) this.forward.updateDisplay(history, fwd);
+        if (back) this.back.updateDisplay(history, back);
     }
 
     numberPanes() {
-        window.requestAnimationFrame(() => {
+        this.win.requestAnimationFrame(() => {
             // unnumber sidebar panes in main window, if something was moved there
             if (this.win === window) this.unNumberPanes(".workspace-tabs > .workspace-leaf");
             let count = 0, lastLeaf: WorkspaceLeaf = null;
@@ -166,9 +183,12 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
     }
 
     onUpdateHistory(leaf: WorkspaceLeaf, history: History) {
-        this.updateLeaf(leaf); // update leaf stats
-        if (history === this.forward.history) this.forward.setHistory(history);  // update nav arrows
-        if (history === this.back.history)    this.back.setHistory(history);
+        this.win.requestAnimationFrame(() => {
+            this.updateLeaf(leaf); // update leaf's stats and buttons
+            // update window's nav arrows
+            if (history === this.forward.history) this.forward.setHistory(history);
+            if (history === this.back.history)    this.back.setHistory(history);
+        });
     }
 }
 
@@ -206,27 +226,25 @@ export class Navigator extends Component {
     }
 
     onunload() {
-        this.setTooltip(this.oldLabel);
+        setTooltip(this.containerEl, this.oldLabel);
         this.count.detach();
         this.containerEl.toggleClass("mod-active", false);
     }
 
     setCount(num: number) { this.count.textContent = "" + (num || ""); }
 
-    setTooltip(text: string) {
-        if (text) this.containerEl.setAttribute("aria-label", text || undefined);
-        else this.containerEl.removeAttribute("aria-label");
+    setHistory(history = History.current()) {
+        this.updateDisplay(this.history = history);
     }
 
-    setHistory(history = History.current()) {
-        this.history = history;
-        const states = this.states = history[this.dir < 0 ? "lookBehind" : "lookAhead"].call(history);
-        this.setCount(states.length);
-        this.setTooltip(states.length ?
+    updateDisplay(history: History, el = this.containerEl) {
+        const states = this.states = history[this.dir < 0 ? "lookBehind" : "lookAhead"]();
+        if (el===this.containerEl) this.setCount(states.length);
+        setTooltip(el, states.length ?
             this.oldLabel + "\n" + this.formatState(states[0]).title :
             `No ${this.kind} history`
         );
-        this.containerEl.toggleClass("mod-active", states.length > 0);
+        el.toggleClass("mod-active", states.length > 0);
     }
 
     openMenu(evt: {clientX: number, clientY: number}) {
@@ -319,4 +337,9 @@ export function onElement<K extends keyof HTMLElementEventMap>(
 ) {
     el.on(event, selector, callback, options)
     return () => el.off(event, selector, callback, options);
+}
+
+function setTooltip(el: HTMLElement, text: string) {
+    if (text) el.setAttribute("aria-label", text || undefined);
+    else el.removeAttribute("aria-label");
 }
