@@ -24,7 +24,11 @@ import { Component, Plugin, View, WorkspaceLeaf, WorkspaceParent, WorkspaceSplit
  */
 export class PerWindowComponent<P extends Plugin> extends Component {
 
-    constructor(public plugin: P, public win: Window, public root: WorkspaceWindow | WorkspaceSplit) {
+    get root(): WorkspaceParent {
+        return containerForWindow(this.win);
+    }
+
+    constructor(public plugin: P, public win: Window) {
         super();
     }
 
@@ -46,7 +50,7 @@ export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> ex
 
     constructor (
         public plugin: P,
-        public factory: new (plugin: P, win: Window, root: WorkspaceParent) => T,  // The class of thing to manage
+        public factory: new (plugin: P, win: Window) => T,  // The class of thing to manage
     ) {
         super();
         plugin.addChild(this);
@@ -76,7 +80,7 @@ export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> ex
     forWindow(win: Window = window.activeWindow ?? window, create = true): T | undefined {
         let inst = this.instances.get(win);
         if (!inst && create) {
-            inst = new this.factory(this.plugin, win, containerForWindow(win));
+            inst = new this.factory(this.plugin, win);
             if (inst) {
                 this.instances.set(win, inst!);
                 inst.registerDomEvent(win, "beforeunload", () => {
@@ -89,11 +93,11 @@ export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> ex
         return inst || undefined;
     }
 
-    forDom(el: Node): T;
-    forDom(el: Node, create: true): T;
-    forDom(el: Node, create: boolean): T | undefined;
+    forDom(el: HTMLElement): T;
+    forDom(el: HTMLElement, create: true): T;
+    forDom(el: HTMLElement, create: boolean): T | undefined;
 
-    forDom(el: Node, create = true) {
+    forDom(el: HTMLElement, create = true) {
         return this.forWindow(windowForDom(el), create);
     }
 
@@ -110,7 +114,7 @@ export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> ex
     forView(view: View, create: boolean): T | undefined;
 
     forView(view: View, create = true) {
-        return this.forDom(view.containerEl, create);
+        return this.forLeaf(view.leaf, create);
     }
 
     windows() {

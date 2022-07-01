@@ -1,8 +1,7 @@
-import {Plugin, TFile, WorkspaceLeaf, WorkspaceSplit, WorkspaceTabs} from 'obsidian';
+import {Plugin, TFile, WorkspaceTabs} from 'obsidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
 import {Navigation, Navigator, onElement} from "./Navigator";
-import {WindowManager} from './PerWindowComponent';
 
 declare module "obsidian" {
     interface Workspace {
@@ -43,7 +42,7 @@ declare module "obsidian" {
 
 export default class PaneRelief extends Plugin {
 
-    nav = new WindowManager(this, Navigation).watch();
+    nav = Navigation.perWindow(this).watch();
 
     onload() {
         installHistory(this);
