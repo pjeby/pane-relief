@@ -1,8 +1,9 @@
-import { Component, WorkspaceItem, WorkspaceLeaf, WorkspaceParent } from "obsidian";
+import { Component, debounce, WorkspaceItem, WorkspaceLeaf, WorkspaceParent } from "obsidian";
 
 declare module "obsidian" {
     interface Workspace {
         getMostRecentLeaf(root: WorkspaceParent): WorkspaceLeaf
+        requestActiveLeafEvents(): void
     }
     interface WorkspaceItem {
         getContainer?(): WorkspaceParent
@@ -36,7 +37,8 @@ export class Maximizer extends Component {
             for (const parent of this.parents()) this.refresh(parent);
         }));
         this.registerEvent(app.workspace.on("active-leaf-change", leaf => {
-            this.refresh(this.parentFor(leaf));
+            const parent = this.parentFor(leaf)
+            if (parent) this.refresh(parent, parent.containerEl.hasClass("should-maximize") ? leaf : null);
         }));
     }
 
@@ -71,6 +73,13 @@ export class Maximizer extends Component {
         return result || app.workspace.getMostRecentLeaf();
     }
 
+    fixSlidingPanes = debounce(() => {
+        if ((app.plugins.plugins as any)["sliding-panes-obsidian"]) {
+            app.workspace.onLayoutChange();
+            app.workspace.requestActiveLeafEvents();
+        }
+    }, 5);
+
     refresh(
         parent: WorkspaceParent,
         leaf: WorkspaceLeaf =
@@ -89,7 +98,11 @@ export class Maximizer extends Component {
             return toggleClass(parent, "has-maximized", haveMatch);
         }
         parent.containerEl.ownerDocument.defaultView.requestAnimationFrame(() => {
-            if (!walk(parent)) toggleClass(parent, "should-maximize", false);
+            const hadMax = parent.containerEl.hasClass("has-maximized");
+            if (!walk(parent)) {
+                toggleClass(parent, "should-maximize", false);
+                if (hadMax) this.fixSlidingPanes();
+            }
         });
     }
 
