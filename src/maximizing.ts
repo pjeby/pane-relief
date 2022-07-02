@@ -1,3 +1,4 @@
+import { around } from "monkey-around";
 import { Component, debounce, WorkspaceItem, WorkspaceLeaf, WorkspaceParent } from "obsidian";
 
 declare module "obsidian" {
@@ -36,9 +37,15 @@ export class Maximizer extends Component {
         this.registerEvent(app.workspace.on("layout-change", () => {
             for (const parent of this.parents()) this.refresh(parent);
         }));
-        this.registerEvent(app.workspace.on("active-leaf-change", leaf => {
-            const parent = this.parentFor(leaf)
-            if (parent) this.refresh(parent, parent.containerEl.hasClass("should-maximize") ? leaf : null);
+
+        const self = this
+        this.register(around(app.workspace, {
+            setActiveLeaf(old) { return function setActiveLeaf(leaf, pushHistory, focus) {
+                // We have to do this here so that MarkdownView can be focused in the new pane
+                const parent = self.parentFor(leaf)
+                if (parent) self.refresh(parent, parent.containerEl.hasClass("should-maximize") ? leaf : null);
+                return old.call(this, leaf, pushHistory, focus);
+            }}
         }));
     }
 
@@ -97,13 +104,11 @@ export class Maximizer extends Component {
             }
             return toggleClass(parent, "has-maximized", haveMatch);
         }
-        parent.containerEl.ownerDocument.defaultView.requestAnimationFrame(() => {
-            const hadMax = parent.containerEl.hasClass("has-maximized");
-            if (!walk(parent)) {
-                toggleClass(parent, "should-maximize", false);
-                if (hadMax) this.fixSlidingPanes();
-            }
-        });
+        const hadMax = parent.containerEl.hasClass("has-maximized");
+        if (!walk(parent)) {
+            toggleClass(parent, "should-maximize", false);
+            if (hadMax) this.fixSlidingPanes();
+        }
     }
 
     parents() {
