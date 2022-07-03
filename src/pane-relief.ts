@@ -118,8 +118,14 @@ export default class PaneRelief extends Plugin {
     }
 
     gotoNthLeaf(n: number, relative: boolean) {
-        const nav = this.nav.forLeaf(app.workspace.activeLeaf);
-        const leaf = gotoNth(nav.leaves(), this.app.workspace.activeLeaf, n, relative);
+        let leaf = app.workspace.activeLeaf;
+        const root = leaf.getRoot();
+        if (root === app.workspace.leftSplit || root === app.workspace.rightSplit) {
+            // Workaround for 0.15.3 sidebar tabs stealing focus
+            leaf = app.workspace.getMostRecentLeaf(app.workspace.rootSplit);
+        }
+        const nav = this.nav.forLeaf(leaf);
+        leaf = gotoNth(nav.leaves(), leaf, n, relative);
         !leaf || this.app.workspace.setActiveLeaf(leaf, true, true);
     }
 
