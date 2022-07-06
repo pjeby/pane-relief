@@ -42,7 +42,16 @@ export class Maximizer extends Component {
         this.register(around(app.workspace, {
             setActiveLeaf(old) { return function setActiveLeaf(leaf, pushHistory, focus) {
                 // We have to do this here so that MarkdownView can be focused in the new pane
-                const parent = self.parentFor(leaf)
+                const parent = self.parentFor(leaf), oldParent = self.parentFor(app.workspace.activeLeaf);
+                if (
+                    parent && oldParent && parent !== oldParent &&
+                    oldParent.containerEl?.matchParent(".hover-popover.is-active.snap-to-viewport") &&
+                    parent.containerEl?.ownerDocument === oldParent.containerEl.ownerDocument &&
+                    !parent.containerEl.matchParent(".hover-popover")
+                ) {
+                    // Switching from maximized popover to non-popover; de-maximize it first
+                    app.commands.executeCommandById("obsidian-hover-editor:restore-active-popover");
+                }
                 if (parent) self.refresh(parent, parent.containerEl.hasClass("should-maximize") ? leaf : null);
                 return old.call(this, leaf, pushHistory, focus);
             }}

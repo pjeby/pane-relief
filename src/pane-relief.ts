@@ -152,6 +152,21 @@ export default class PaneRelief extends Plugin {
         ;
         if (fromPos == -1) return false;
 
+        if (children.length === 1) {
+            const popoverEl = leaf.containerEl.matchParent(".hover-popover");
+            if (popoverEl && relative && Math.abs(toPos) === 1) {
+                // Allow swapping popovers in the stack
+                let neighbor = popoverEl;
+                while (neighbor && (neighbor === popoverEl || !neighbor.matches(".hover-popover")))
+                    neighbor = toPos < 0 ? neighbor.previousElementSibling : neighbor.nextElementSibling;
+                if (neighbor) return () => {
+                    if (toPos < 0) neighbor.parentElement.insertBefore(popoverEl, neighbor);
+                    else neighbor.parentElement.insertBefore(neighbor, popoverEl);
+                    app.workspace.onLayoutChange();
+                }
+            }
+        }
+
         if (relative) {
             toPos += fromPos;
             if (toPos < 0 || toPos >= children.length) return false;
