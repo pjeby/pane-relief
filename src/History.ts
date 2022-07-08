@@ -70,6 +70,11 @@ export class HistoryEntry {
         leaf.setViewState({...viewState, active: true, popstate: true}, eState);
     }
 
+    isEmpty() {
+        const viewState = JSON.parse(this.raw.state || "{}");
+        return (viewState.type === "empty");
+    }
+
     replaceState(rawState: PushState) {
         if (rawState.state !== this.raw.state) {
             const viewState = JSON.parse(rawState.state || "{}");
@@ -170,6 +175,8 @@ export class History {
 
     pushState(rawState: PushState, title: string, url: string)   {
         //console.log("pushing", rawState)
+        const entry = this.stack[this.pos];
+        if (entry && entry.isEmpty()) return this.replaceState(rawState, title, url);
         this.stack.splice(0, this.pos, new HistoryEntry(rawState));
         this.pos = 0;
         // Limit "back" to 20

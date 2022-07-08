@@ -130,28 +130,6 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
             this.display();
             this.numberPanes();
             this.registerEvent(app.workspace.on("layout-change", this.numberPanes, this));
-            this.register(
-                // Support "Customizable Page Header and Title Bar" buttons
-                onElement(
-                    this.win.document.body,
-                    "contextmenu",
-                    ".view-header > .view-actions > .view-action",
-                    (evt, target) => {
-                        const dir = (
-                            (target.matches('[class*=" app:go-forward"]') && "forward") ||
-                            (target.matches('[class*=" app:go-back"]')    && "back")
-                        );
-                        if (!dir) return;
-                        const el = target.matchParent(".workspace-leaf");
-                        const leaf = this.leaves().filter(leaf => leaf.containerEl === el).pop();
-                        if (!leaf) return;
-                        evt.preventDefault();
-                        evt.stopImmediatePropagation();
-                        this.display(leaf);
-                        this[dir].openMenu(evt);
-                    }, {capture: true}
-                )
-            );
         });
     }
 
@@ -223,7 +201,6 @@ export class Navigator extends Component {
     containerEl: HTMLElement
     count: HTMLSpanElement
     history: History = null;
-    states: HistoryEntry[];
     oldLabel: string
 
     constructor(public owner: Navigation, public kind: 'forward'|'back', public dir: number)  {
@@ -236,7 +213,6 @@ export class Navigator extends Component {
         );
         this.count = this.containerEl.createSpan({prepend: this.kind === "back", cls: "history-counter"});
         this.history = null;
-        this.states = [];
         this.oldLabel = this.containerEl.getAttribute("aria-label");
         this.registerDomEvent(this.containerEl, "contextmenu", this.openMenu.bind(this));
         const onClick = (e: MouseEvent) => {
@@ -247,6 +223,22 @@ export class Navigator extends Component {
         }
         this.register(() => this.containerEl.removeEventListener("click", onClick, true));
         this.containerEl.addEventListener("click", onClick, true);
+        this.register(
+            // Support "Customizable Page Header and Title Bar" buttons
+            onElement(
+                this.owner.win.document.body,
+                "contextmenu",
+                `.view-header > .view-actions > .view-action[class*="app:go-${this.kind}"]`,
+                (evt, target) => {
+                    const el = target.matchParent(".workspace-leaf");
+                    const leaf = this.owner.leaves().filter(leaf => leaf.containerEl === el).pop();
+                    if (!leaf) return;
+                    evt.preventDefault();
+                    evt.stopImmediatePropagation();
+                    this.openMenu(evt, History.forLeaf(leaf));
+                }, {capture: true}
+            )
+        );
     }
 
     onunload() {
@@ -262,7 +254,7 @@ export class Navigator extends Component {
     }
 
     updateDisplay(history: History, el = this.containerEl) {
-        const states = this.states = history[this.dir < 0 ? "lookBehind" : "lookAhead"]();
+        const states = history[this.dir < 0 ? "lookBehind" : "lookAhead"]();
         if (el===this.containerEl) this.setCount(states.length);
         setTooltip(el, states.length ?
             this.oldLabel + "\n" + this.formatState(states[0]).title :
@@ -271,32 +263,32 @@ export class Navigator extends Component {
         el.toggleClass("mod-active", states.length > 0);
     }
 
-    openMenu(evt: {clientX: number, clientY: number}) {
-        if (!this.states.length) return;
+    openMenu(evt: {clientX: number, clientY: number}, history = this.history) {
+        const states = history[this.dir < 0 ? "lookBehind" : "lookAhead"]();
+        if (!states.length) return;
         const menu = new Menu();
         menu.dom.addClass("pane-relief-history-menu");
         menu.dom.on("mousedown", ".menu-item", e => {e.stopPropagation();}, true);
-        this.states.map(this.formatState.bind(this)).forEach(
-            (info: FileInfo, idx) => this.menuItem(info, idx, menu)
+        states.map(this.formatState.bind(this)).forEach(
+            (info: FileInfo, idx) => this.menuItem(info, idx, menu, history)
         );
         menu.showAtPosition({x: evt.clientX, y: evt.clientY + 20});
         this.owner.historyIsOpen = true;
         menu.onHide(() => { this.owner.historyIsOpen = false; this.owner.display(); });
     }
 
-    menuItem(info: FileInfo, idx: number, menu: Menu) {
-        const my = this;
+    menuItem(info: FileInfo, idx: number, menu: Menu, history: History) {
+        const {dir, kind} = this;
         menu.addItem(i => { createItem(i); if (info.file) setupFileEvents(i.dom); });
         return;
 
         function createItem(i: MenuItem, prefix="") {
             i.setIcon(info.icon).setTitle(prefix + info.title).onClick(e => {
-                let history = my.history;
                 // Check for ctrl/cmd/middle button and split leaf + copy history
                 if (Keymap.isModifier(e, "Mod") || 1 === (e as MouseEvent).button) {
                     history = history.cloneTo(app.workspace.splitActiveLeaf());
                 }
-                history.go((idx+1) * my.dir, true);
+                history.go((idx+1) * dir, true);
             });
         }
 
@@ -321,7 +313,7 @@ export class Navigator extends Component {
             // File menu
             dom.addEventListener("contextmenu", e => {
                 const menu = new Menu();
-                menu.addItem(i => createItem(i, `Go ${my.kind} to `)).addSeparator();
+                menu.addItem(i => createItem(i, `Go ${kind} to `)).addSeparator();
                 app.workspace.trigger(
                     "file-menu", menu, info.file, "link-context-menu"
                 );
