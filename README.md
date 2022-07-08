@@ -5,6 +5,7 @@ This plugin helps relieve the "pane" of managing lots of panes in [Obsidian.md](
 - Browser-like per-pane navigation history (complete with forward/back lists)
 - Commands to move between panes or windows, move panes around, jump to the Nth pane, etc.
 - An intelligent pane maximizing command
+- Optional [per-pane navigation buttons](#per-pane-navigation-buttons) and [pane numbering](#pane-numbering)
 
 The overall goal of these features is to provide a more browser-like Obsidian experience for users that like using lots of panes, windows, and/or Hover Editors.
 
@@ -102,4 +103,4 @@ The history management doesn't have any special handling for linked panes, and s
 
 #### Renames and Deletes
 
-If you rename or delete a note that's in the history for a pane, then going backward or forward to that point will not find the file, and will give you a "No file open" message instead.  This is consistent with Obsidian's built-in history management, but might be (somewhat) fixable in a future release, at least for the history of the currently-loaded workspace.  (There isn't really a way to update the history in saved workspaces, however.)
+If you rename or delete a note that's in the history for a pane, then going backward or forward to that point may not find the file, and will give you a "No file open" message instead.
