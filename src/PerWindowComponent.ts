@@ -64,10 +64,10 @@ export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> ex
             this.watching = true;
             this.registerEvent(
                 workspace.on("window-open", (_, win) => {
-                    workspace.onLayoutReady(() => setImmediate(() => this.forWindow(win)));
+                    workspace.onLayoutReady(() => Promise.resolve().then(() => this.forWindow(win)));
                 })
             );
-            workspace.onLayoutReady(() => setImmediate(() => this.forAll()));
+            workspace.onLayoutReady(() => Promise.resolve().then(() => this.forAll()));
         }
         return this;
     }

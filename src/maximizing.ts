@@ -19,13 +19,13 @@ declare module "obsidian" {
 /**
  * Efficiently update a class on a workspace item, only touching where changes are needed
  *
- * @param item The workspace item to add or remove the class from
+ * @param el The element to add or remove the class from
  * @param cls The class to add or remove
  * @param state Boolean, flag to add or remove, defaults to opposite of current state
  * @returns boolean for the state of the class afterwards
  */
-function toggleClass(item: WorkspaceItem, cls: string, state?: boolean): boolean {
-    const el = item.containerEl, had = el.classList.contains(cls);
+function toggleClass(el: Element, cls: string, state?: boolean): boolean {
+    const had = el.classList.contains(cls);
     state = state ?? !had;
     if (state !== had) { state ? el.classList.add(cls) : el.classList.remove(cls); }
     return state;
@@ -42,17 +42,17 @@ export class Maximizer extends Component {
         this.register(around(app.workspace, {
             setActiveLeaf(old) { return function setActiveLeaf(leaf, pushHistory, focus) {
                 // We have to do this here so that MarkdownView can be focused in the new pane
-                const parent = self.parentFor(leaf), oldParent = self.parentFor(app.workspace.activeLeaf);
+                const parent = self.parentForLeaf(leaf), oldParent = self.parentForLeaf(app.workspace.activeLeaf);
                 if (
                     parent && oldParent && parent !== oldParent &&
-                    oldParent.containerEl?.matchParent(".hover-popover.is-active.snap-to-viewport") &&
-                    parent.containerEl?.ownerDocument === oldParent.containerEl.ownerDocument &&
-                    !parent.containerEl.matchParent(".hover-popover")
+                    oldParent.matchParent(".hover-popover.is-active.snap-to-viewport") &&
+                    parent.ownerDocument === oldParent.ownerDocument &&
+                    !parent.matchParent(".hover-popover")
                 ) {
                     // Switching from maximized popover to non-popover; de-maximize it first
                     app.commands.executeCommandById("obsidian-hover-editor:restore-active-popover");
                 }
-                if (parent) self.refresh(parent, parent.containerEl.hasClass("should-maximize") ? leaf : null);
+                if (parent) self.refresh(parent, parent.hasClass("should-maximize") ? leaf.containerEl : null);
                 return old.call(this, leaf, pushHistory, focus);
             }}
         }));
@@ -64,12 +64,12 @@ export class Maximizer extends Component {
     }
 
     toggleMaximize(leaf = app.workspace.activeLeaf) {
-        const parent = this.parentFor(leaf);
+        const parent = this.parentForLeaf(leaf);
         if (!parent) return;
-        const popoverEl = parent.containerEl.matchParent(".hover-popover");
+        const popoverEl = parent.matchParent(".hover-popover");
         if (popoverEl && app.plugins.plugins["obsidian-hover-editor"]) {
             // Check if single leaf in a popover
-            let count = 0; app.workspace.iterateLeaves(() => { count++; }, parent);
+            let count = popoverEl.findAll(".workspace-leaf").length;
             if (count === 1) {
                 // Maximize or restore the popover instead of the leaf
                 app.commands.executeCommandById(
@@ -80,13 +80,11 @@ export class Maximizer extends Component {
                 return;
             }
         }
-        if (parent) this.refresh(parent, toggleClass(parent, "should-maximize") ? leaf : null);
+        if (parent) this.refresh(parent, toggleClass(parent, "should-maximize") ? leaf.containerEl : null);
     }
 
-    lastMaximized(parent: WorkspaceParent) {
-        let result: WorkspaceLeaf = null;
-        app.workspace.iterateLeaves(leaf => { if (leaf.containerEl.hasClass("is-maximized")) result = leaf; }, parent);
-        return result || app.workspace.getMostRecentLeaf();
+    lastMaximized(parent: Element) {
+        return parent.find(".workspace-leaf.is-maximized") || app.workspace.getMostRecentLeaf().containerEl;
     }
 
     fixSlidingPanes = debounce(() => {
@@ -97,50 +95,41 @@ export class Maximizer extends Component {
     }, 5);
 
     refresh(
-        parent: WorkspaceParent,
-        leaf: WorkspaceLeaf =
-            parent.containerEl.hasClass("should-maximize") ? this.lastMaximized(parent) : null
+        parent: Element,
+        leafEl: Element =
+            parent.hasClass("should-maximize") ? this.lastMaximized(parent) : null
     ) {
-        function walk(parent: WorkspaceParent) {
-            let haveMatch = false, match = false;
-            for (const item of parent.children) {
-                if (item instanceof WorkspaceLeaf) {
-                    toggleClass(item, "is-maximized",  match = (leaf === item));
-                } else if (item instanceof WorkspaceParent) {
-                    match = walk(item);
-                }
-                haveMatch ||= match;
-            }
-            return toggleClass(parent, "has-maximized", haveMatch);
-        }
-        const hadMax = parent.containerEl.hasClass("has-maximized");
-        if (!walk(parent)) {
+        const hadMax = parent.hasClass("has-maximized");
+        parent.findAllSelf(".workspace-split").forEach(split => {
+            //if (split === parent || this.parentFor(split) === parent)
+                toggleClass(split, "has-maximized", leafEl ? split.contains(leafEl): false);
+        });
+        parent.findAll(".workspace-leaf").forEach(leaf => {
+            //if (this.parentFor(leaf) === parent) 
+            toggleClass(leaf, "is-maximized", leaf === leafEl);
+        })
+        if (!leafEl || !parent.contains(leafEl)) {
             toggleClass(parent, "should-maximize", false);
             if (hadMax) this.fixSlidingPanes();
         }
     }
 
     parents() {
-        const parents: WorkspaceParent[] = [app.workspace.rootSplit]
-        parents.concat(app.workspace.floatingSplit?.children ?? []);
+        const parents: HTMLDivElement[] = [app.workspace.rootSplit.containerEl]
+        parents.concat((app.workspace.floatingSplit?.children ?? []).map(i => i.containerEl));
         const popovers = app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
         if (popovers) for (const popover of popovers) {
-            if (popover.rootSplit) parents.push(popover.rootSplit)
+            if (popover.rootSplit) parents.push(popover.rootSplit.containerEl)
         }
         return parents;
     }
 
-    parentFor(leaf: WorkspaceLeaf): WorkspaceParent {
-        if (!leaf || leaf.containerEl.matchParent(".workspace-tabs")) return null;
-        const container = leaf.getContainer?.();
-        if (container && container.containerEl.hasClass("mod-root")) return container;
-        const popoverEl = leaf.containerEl.matchParent(".hover-popover");
-        if (popoverEl) {
-            const popovers = app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
-            if (popovers) for (const popover of popovers) {
-                if (popoverEl.contains(popover.rootSplit.containerEl)) return popover.rootSplit;
-            }
-        }
-        return app.workspace.rootSplit;
+    parentForLeaf(leaf: WorkspaceLeaf) {
+        return this.parentFor(leaf.containerEl);
     }
+
+    parentFor(el: Element) {
+        return el.matchParent(".workspace-split.mod-root, .hover-popover > .popover-content > .workspace-split");
+    }
+
 }

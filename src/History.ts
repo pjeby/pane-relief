@@ -107,7 +107,7 @@ export class History {
         if (leaf) domLeaves.set(leaf.containerEl, leaf);
         if (leaf) return leaf[HIST_ATTR] instanceof this ?
             leaf[HIST_ATTR] :
-            leaf[HIST_ATTR] = new this(leaf, leaf[HIST_ATTR]?.serialize() || undefined);
+            leaf[HIST_ATTR] = new this(leaf, (leaf[HIST_ATTR]as any)?.serialize() || undefined);
     }
 
     pos: number
