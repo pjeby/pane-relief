@@ -107,8 +107,8 @@ export default class PaneRelief extends Plugin {
             [command("put-8th",  "Place as 8th pane in the split",     "Mod+Alt+8")] () { return () => this.placeLeaf(7, false); },
             [command("put-last", "Place as last pane in the split",    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); },
 
-            [command("maximize", "Maximize active pane (Toggle)", [])] () {
-                if (this.max.parentFor(app.workspace.activeLeaf)) return () => this.max.toggleMaximize();
+            [command("maximize", "Maximize active pane (Toggle)", [])] (this: PaneRelief) {
+                if (this.max.parentForLeaf(app.workspace.activeLeaf)) return () => this.max.toggleMaximize();
             },
         });
     }
