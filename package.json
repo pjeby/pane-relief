@@ -1,16 +1,14 @@
 {
   "name": "pane-relief",
   "scripts": {
-    "dev": "rollup --config rollup.config.js -w",
-    "build": "rollup --config rollup.config.js"
+    "dev": "node ophidian.config.mjs dev",
+    "build": "node ophidian.config.mjs production"
   },
   "license": "ISC",
   "devDependencies": {
-    "@rollup/plugin-typescript": "^8",
     "monkey-around": "^2.3.0",
-    "node-sass": "^5",
     "obsidian": "0.14.5",
-    "obsidian-rollup-presets": "github:pjeby/obsidian-rollup-presets",
+    "ophidian": "github:pjeby/ophidian",
     "rollup": "^2.38.1",
     "tslib": "^2.3.0",
     "typescript": "4.4.3"
