@@ -124,11 +124,11 @@ export class Maximizer extends Component {
     }
 
     parentForLeaf(leaf: WorkspaceLeaf) {
-        return this.parentFor(leaf.containerEl);
+        return this.parentFor(leaf?.containerEl);
     }
 
     parentFor(el: Element) {
-        return el.matchParent(".workspace-split.mod-root, .hover-popover > .popover-content > .workspace-split");
+        return el?.matchParent(".workspace-split.mod-root, .hover-popover > .popover-content > .workspace-split");
     }
 
 }
