@@ -30,7 +30,7 @@ export function command(id: string, name: string, hotkeys: KeyDef | KeyDef[] = [
 
 export function addCommands<P extends Plugin>(
     plugin: P,
-    cmdset: Record<symbol, (thisArg: P) => boolean | (() => any)>
+    cmdset: Record<symbol, (thisArg: P) => boolean | (() => any)> = plugin.constructor.prototype
 ) {
     // Extract command symbols from cmdset and register them, bound to the plugin for methods
     Object.getOwnPropertySymbols(cmdset).forEach(sym => {
