@@ -1,4 +1,5 @@
 import {Plugin, TFile, WorkspaceTabs} from 'obsidian';
+import { use } from 'ophidian';
 import {addCommands, command} from "./commands";
 import {History, installHistory} from "./History";
 import { Maximizer } from './maximizing';
@@ -44,8 +45,8 @@ declare module "obsidian" {
 }
 
 export default class PaneRelief extends Plugin {
-
-    nav = Navigation.perWindow(this).watch();
+    use = use.plugin(this);
+    nav = this.use(Navigation).watch();
     max = this.addChild(new Maximizer);
 
     onload() {

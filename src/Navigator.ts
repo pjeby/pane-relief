@@ -2,6 +2,7 @@ import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem} from 'obsidian'
 import {domLeaves, History, HistoryEntry} from "./History";
 import PaneRelief from './pane-relief';
 import {PerWindowComponent} from './PerWindowComponent';
+import {use} from "ophidian";
 
 declare module "obsidian" {
     interface Menu {
@@ -61,7 +62,10 @@ const nonFileViews: Record<string, string[]> = {
     empty: ["cross", "No file"]
 }
 
-export class Navigation extends PerWindowComponent<PaneRelief> {
+export class Navigation extends PerWindowComponent {
+
+    plugin = this.use(PaneRelief);
+
     back: Navigator
     forward: Navigator
     // Set to true while either menu is open, so we don't switch it out
@@ -79,8 +83,8 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
     }
 
     leaves() {
-        const leaves: WorkspaceLeaf[] = [];
-        const cb = (leaf: WorkspaceLeaf) => { leaves.push(leaf); };
+        const leaves = new Set<WorkspaceLeaf>();
+        const cb = (leaf: WorkspaceLeaf) => { leaves.add(leaf); };
         app.workspace.iterateLeaves(cb, this.root);
 
         // Support Hover Editors
@@ -90,7 +94,7 @@ export class Navigation extends PerWindowComponent<PaneRelief> {
             else if (popover.rootSplit) app.workspace.iterateLeaves(cb, popover.rootSplit);
             else if (popover.leaf) cb(popover.leaf);
         }
-        return leaves;
+        return [...leaves.values()];
     }
 
     latestLeaf() {
@@ -285,7 +289,7 @@ export class Navigator extends Component {
         function createItem(i: MenuItem, prefix="") {
             i.setIcon(info.icon).setTitle(prefix + info.title).onClick(e => {
                 // Check for ctrl/cmd/middle button and split leaf + copy history
-                if (Keymap.isModifier(e, "Mod") || 1 === (e as MouseEvent).button) {
+                if (Keymap.isModEvent(e)) {
                     history = history.cloneTo(app.workspace.splitActiveLeaf());
                 }
                 history.go((idx+1) * dir, true);

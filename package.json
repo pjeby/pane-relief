@@ -8,9 +8,6 @@
   "devDependencies": {
     "monkey-around": "^2.3.0",
     "obsidian": "0.14.5",
-    "ophidian": "github:pjeby/ophidian",
-    "rollup": "^2.38.1",
-    "tslib": "^2.3.0",
-    "typescript": "4.4.3"
+    "ophidian": "git://github.com/pjeby/ophidian.git"
   }
 }

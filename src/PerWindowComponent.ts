@@ -1,4 +1,5 @@
 import { Component, Plugin, View, WorkspaceLeaf, WorkspaceParent, WorkspaceSplit, WorkspaceWindow } from "obsidian";
+import { Context, Service, use } from "ophidian";
 
 /**
  * Component that belongs to a plugin + window. e.g.:
@@ -22,38 +23,34 @@ import { Component, Plugin, View, WorkspaceLeaf, WorkspaceParent, WorkspaceSplit
  * If you want your components to be created on demand instead of automatically when
  * window(s) are opened, you can pass `false` as the second argument to `perWindow()`.
  */
-export class PerWindowComponent<P extends Plugin> extends Component {
+export class PerWindowComponent extends Component {
 
     get root(): WorkspaceParent {
         return containerForWindow(this.win);
     }
 
-    constructor(public plugin: P, public win: Window) {
+    constructor(public use: Context, public win: Window) {
         super();
     }
 
-    static perWindow<T extends PerWindowComponent<P>, P extends Plugin>(
-        this: new (plugin: P, win: Window) => T,
-        plugin: P
-    ) {
-        return new WindowManager(plugin, this);
+    [use.factory]() {
+        return new WindowManager(this.constructor as new (use: Context, win: Window) => typeof this)
     }
 }
 
 /**
  * Manage per-window components
  */
-export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> extends Component {
+export class WindowManager<T extends PerWindowComponent> extends Service {
+
     instances = new WeakMap<Window, T>();
 
     watching: boolean = false
 
     constructor (
-        public plugin: P,
-        public factory: new (plugin: P, win: Window) => T,  // The class of thing to manage
+        public factory: new (use: Context, win: Window) => T,  // The class of thing to manage
     ) {
         super();
-        plugin.addChild(this);
     }
 
     watch(): this {
@@ -80,7 +77,7 @@ export class WindowManager<T extends PerWindowComponent<P>, P extends Plugin> ex
     forWindow(win: Window = window.activeWindow ?? window, create = true): T | undefined {
         let inst = this.instances.get(win);
         if (!inst && create) {
-            inst = new this.factory(this.plugin, win);
+            inst = new this.factory(this.use, win);
             if (inst) {
                 this.instances.set(win, inst!);
                 inst.registerDomEvent(win, "beforeunload", () => {
