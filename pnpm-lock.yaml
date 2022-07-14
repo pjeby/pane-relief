@@ -2,43 +2,15 @@ lockfileVersion: 5.3
 
 specifiers:
   monkey-around: ^2.3.0
-  obsidian: 0.14.5
+  obsidian: 0.15.4
   ophidian: git://github.com/pjeby/ophidian.git
 
 devDependencies:
   monkey-around: 2.3.0
-  obsidian: 0.14.5
-  ophidian: github.com/pjeby/ophidian/0af36f1bf028f874f5fbc289752529aa938014de
+  obsidian: 0.15.4
+  ophidian: github.com/pjeby/ophidian/716bd3a6494bdfbdb502eb82fe22e3c4c47e423a
 
 packages:
-
-  /@codemirror/rangeset/0.19.9:
-    resolution: {integrity: sha512-V8YUuOvK+ew87Xem+71nKcqu1SXd5QROMRLMS/ljT5/3MCxtgrRie1Cvild0G/Z2f1fpWxzX78V0U4jjXBorBQ==}
-    deprecated: As of 0.20.0, this package has been merged into @codemirror/state
-    dependencies:
-      '@codemirror/state': 0.19.9
-    dev: true
-
-  /@codemirror/state/0.19.9:
-    resolution: {integrity: sha512-psOzDolKTZkx4CgUqhBQ8T8gBc0xN5z4gzed109aF6x7D7umpDRoimacI/O6d9UGuyl4eYuDCZmDFr2Rq7aGOw==}
-    dependencies:
-      '@codemirror/text': 0.19.6
-    dev: true
-
-  /@codemirror/text/0.19.6:
-    resolution: {integrity: sha512-T9jnREMIygx+TPC1bOuepz18maGq/92q2a+n4qTqObKwvNMg+8cMTslb8yxeEDEq7S3kpgGWxgO1UWbQRij0dA==}
-    deprecated: As of 0.20.0, this package has been merged into @codemirror/state
-    dev: true
-
-  /@codemirror/view/0.19.48:
-    resolution: {integrity: sha512-0eg7D2Nz4S8/caetCTz61rK0tkHI17V/d15Jy0kLOT8dTLGGNJUponDnW28h2B6bERmPlVHKh8MJIr5OCp1nGw==}
-    dependencies:
-      '@codemirror/rangeset': 0.19.9
-      '@codemirror/state': 0.19.9
-      '@codemirror/text': 0.19.6
-      style-mod: 4.0.0
-      w3c-keyname: 2.2.4
-    dev: true
 
   /@nodelib/fs.scandir/2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -666,8 +638,8 @@ packages:
       minimist: 1.2.6
     dev: true
 
-  /moment/2.29.1:
-    resolution: {integrity: sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==}
+  /moment/2.29.3:
+    resolution: {integrity: sha512-c6YRvhEo//6T2Jz/vVtYzqBzwvPT95JBQ+smCytzf7c50oMZRsR/a4w88aD34I+/QVSfnoAnSBFPJHItlOMJVw==}
     dev: true
 
   /monkey-around/2.3.0:
@@ -684,13 +656,14 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /obsidian/0.14.5:
-    resolution: {integrity: sha512-ka3DuL+iel+olMq3XlVQ06FtpYwIqUeKjyy+RUHeD0p84fp5DyxUL//r0CTczdmiVAvYprzb64NxghFI+E1slg==}
+  /obsidian/0.15.4:
+    resolution: {integrity: sha512-FE11CxxpVD6t/DBvjLvlT7q7YYW91ubTqPKIIp286LdnyLipS8Xi3Tif8i8ALPv87Vg9obKM43aWcPsYLxLllQ==}
+    peerDependencies:
+      '@codemirror/state': ^6.0.0
+      '@codemirror/view': ^6.0.0
     dependencies:
-      '@codemirror/state': 0.19.9
-      '@codemirror/view': 0.19.48
       '@types/codemirror': 0.0.108
-      moment: 2.29.1
+      moment: 2.29.3
     dev: true
 
   /once/1.4.0:
@@ -811,10 +784,6 @@ packages:
       safe-buffer: 5.1.2
     dev: true
 
-  /style-mod/4.0.0:
-    resolution: {integrity: sha512-OPhtyEjyyN9x3nhPsu76f52yUGXiZcgvsrFVtvTkyGRQJ0XK+GPc6ov1z+lRpbeabka+MYEQxOYRnt5nF30aMw==}
-    dev: true
-
   /supports-color/7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
@@ -849,18 +818,14 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
 
-  /w3c-keyname/2.2.4:
-    resolution: {integrity: sha512-tOhfEwEzFLJzf6d1ZPkYfGj+FWhIpBux9ppoP3rlclw3Z0BZv3N7b7030Z1kYth+6rDuAsXUFr+d0VE6Ed1ikw==}
-    dev: true
-
   /wrappy/1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
     dev: true
 
-  github.com/pjeby/ophidian/0af36f1bf028f874f5fbc289752529aa938014de:
-    resolution: {tarball: https://codeload.github.com/pjeby/ophidian/tar.gz/0af36f1bf028f874f5fbc289752529aa938014de}
+  github.com/pjeby/ophidian/716bd3a6494bdfbdb502eb82fe22e3c4c47e423a:
+    resolution: {tarball: https://codeload.github.com/pjeby/ophidian/tar.gz/716bd3a6494bdfbdb502eb82fe22e3c4c47e423a}
     name: ophidian
-    version: 0.0.1
+    version: 0.0.2
     dependencies:
       builtin-modules: 3.3.0
       copy-newer: 2.1.2
@@ -869,6 +834,9 @@ packages:
       esbuild-plugin-sass: 1.0.1_esbuild@0.14.49
       fs-extra: 10.1.0
       monkey-around: 2.3.0
-      obsidian: 0.14.5
+      obsidian: 0.15.4
       to-use: 0.2.1
+    transitivePeerDependencies:
+      - '@codemirror/state'
+      - '@codemirror/view'
     dev: true

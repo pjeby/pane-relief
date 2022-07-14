@@ -3,11 +3,7 @@ import { Component, debounce, WorkspaceItem, WorkspaceLeaf, WorkspaceParent } fr
 
 declare module "obsidian" {
     interface Workspace {
-        getMostRecentLeaf(root: WorkspaceParent): WorkspaceLeaf
         requestActiveLeafEvents(): void
-    }
-    interface WorkspaceItem {
-        getContainer?(): WorkspaceParent
     }
     interface App {
         commands: {

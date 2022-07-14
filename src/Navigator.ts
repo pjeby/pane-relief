@@ -1,8 +1,6 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem} from 'obsidian';
 import {domLeaves, History, HistoryEntry} from "./History";
-import PaneRelief from './pane-relief';
-import {PerWindowComponent} from './PerWindowComponent';
-import {use} from "ophidian";
+import {PerWindowComponent} from "ophidian";
 
 declare module "obsidian" {
     interface Menu {
@@ -64,8 +62,6 @@ const nonFileViews: Record<string, string[]> = {
 
 export class Navigation extends PerWindowComponent {
 
-    plugin = this.use(PaneRelief);
-
     back: Navigator
     forward: Navigator
     // Set to true while either menu is open, so we don't switch it out
@@ -85,7 +81,7 @@ export class Navigation extends PerWindowComponent {
     leaves() {
         const leaves = new Set<WorkspaceLeaf>();
         const cb = (leaf: WorkspaceLeaf) => { leaves.add(leaf); };
-        app.workspace.iterateLeaves(cb, this.root);
+        app.workspace.iterateLeaves(cb, this.container);
 
         // Support Hover Editors
         const popovers = app.plugins.plugins["obsidian-hover-editor"]?.activePopovers;
@@ -99,7 +95,7 @@ export class Navigation extends PerWindowComponent {
 
     latestLeaf() {
         let leaf = app.workspace.activeLeaf;
-        if (leaf && this.plugin.nav.forLeaf(leaf) === this) return leaf;
+        if (leaf && this.use(Navigation).forLeaf(leaf) === this) return leaf;
         return this.leaves().reduce((best, leaf)=>{ return (!best || best.activeTime < leaf.activeTime) ? leaf : best; }, null);
     }
 
@@ -359,7 +355,7 @@ export function onElement<K extends keyof HTMLElementEventMap>(
     return () => el.off(event, selector, callback, options);
 }
 
-function setTooltip(el: HTMLElement, text: string) {
+export function setTooltip(el: HTMLElement, text: string) {
     if (text) el.setAttribute("aria-label", text || undefined);
     else el.removeAttribute("aria-label");
 }

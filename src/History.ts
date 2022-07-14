@@ -1,6 +1,6 @@
 import {Notice, TAbstractFile, ViewState, WorkspaceLeaf} from 'obsidian';
 import {around} from "monkey-around";
-import PaneRelief from "./pane-relief";
+import {LayoutStorage, Service, windowEvent} from "ophidian";
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
@@ -185,71 +185,75 @@ export class History {
     }
 }
 
-export function installHistory(plugin: PaneRelief) {
+export class HistoryManager extends Service {
+    onload() {
+        const store = this.use(LayoutStorage);
 
-    // Monkeypatch: include history in leaf serialization (so it's persisted with the workspace)
-    // and check for popstate events (to suppress them)
-    plugin.register(around(WorkspaceLeaf.prototype, {
-        serialize(old) { return function serialize(){
-            const result = old.call(this);
-            if (this[HIST_ATTR]) result[SERIAL_PROP] = this[HIST_ATTR].serialize();
-            return result;
-        }},
-        setViewState(old) { return function setViewState(vs, es){
-            if (vs.popstate && window.event?.type === "popstate") {
-                return Promise.resolve();
+        this.registerEvent(store.onSaveItem((item, state) => {
+            if (item instanceof WorkspaceLeaf && item[HIST_ATTR]) {
+                state[SERIAL_PROP] = item[HIST_ATTR].serialize();
             }
-            return old.call(this, vs, es);
-        }}
-    }));
+        }));
 
-    plugin.register(around(app.workspace, {
-        // Monkeypatch: load history during leaf load, if present
-        deserializeLayout(old) { return async function deserializeLayout(state, ...etc: any[]){
-            let result = await old.call(this, state, ...etc);
-            if (state.type === "leaf") {
-                if (!result) {
-                    // Retry loading the pane as an empty
-                    state.state.type = 'empty';
-                    result = await old.call(this, state, ...etc);
-                    if (!result) return result;
+        this.registerEvent(store.onLoadItem((item, state) => {
+            if (item instanceof WorkspaceLeaf && state[SERIAL_PROP]) {
+                item[HIST_ATTR] = new History(item, state[SERIAL_PROP]);
+            }
+        }));
+
+        // Monkeypatch: check for popstate events (to suppress them)
+        this.register(around(WorkspaceLeaf.prototype, {
+            setViewState(old) { return function setViewState(vs, es){
+                if (vs.popstate && window.event?.type === "popstate") {
+                    return Promise.resolve();
                 }
-                if (state[SERIAL_PROP]) result[HIST_ATTR] = new History(result, state[SERIAL_PROP]);
-            }
-            return result;
-        }},
+                return old.call(this, vs, es);
+            }}
+        }));
+
+        this.register(around(app.workspace, {
         // Monkeypatch: keep Obsidian from pushing history in setActiveLeaf
-        setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc) {
-            const unsub = around(this, {
-                recordHistory(old) { return function (leaf: WorkspaceLeaf, _push: boolean, ...args: any[]) {
-                    // Always update state in place
-                    return old.call(this, leaf, false, ...args);
-                }; }
+            setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc) {
+                const unsub = around(this, {
+                    recordHistory(old) { return function (leaf: WorkspaceLeaf, _push: boolean, ...args: any[]) {
+                        // Always update state in place
+                        return old.call(this, leaf, false, ...args);
+                    }; }
+                });
+                try {
+                    return old.call(this, leaf, ...etc);
+                } finally {
+                    unsub();
+                }
+            }},
+        }));
+
+        function isSyntheticHistoryEvent(button: number) {
+            return !!windowEvent((_, event) => {
+                if (event.type === "mousedown" && (event as MouseEvent).button === button) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    return true;
+                }
             });
-            try {
-                return old.call(this, leaf, ...etc);
-            } finally {
-                unsub();
-            }
-        }},
-    }));
+        }
 
-    // Proxy the window history with a wrapper that delegates to the active leaf's History object,
-    const realHistory = window.history;
-    plugin.register(() => (window as any).history = realHistory);
-    Object.defineProperty(window, "history", { enumerable: true, configurable: true, writable: true, value: {
-        get state()      { return History.current().state; },
-        get length()     { return History.current().length; },
+        // Proxy the window history with a wrapper that delegates to the active leaf's History object,
+        const realHistory = window.history;
+        this.register(() => (window as any).history = realHistory);
+        Object.defineProperty(window, "history", { enumerable: true, configurable: true, writable: true, value: {
+            get state()      { return History.current().state; },
+            get length()     { return History.current().length; },
 
-        back()    { if (!plugin.isSyntheticHistoryEvent(3)) this.go(-1); },
-        forward() { if (!plugin.isSyntheticHistoryEvent(4)) this.go( 1); },
-        go(by: number)    { History.current().go(by); },
+            back()    { if (!isSyntheticHistoryEvent(3)) this.go(-1); },
+            forward() { if (!isSyntheticHistoryEvent(4)) this.go( 1); },
+            go(by: number)    { History.current().go(by); },
 
-        replaceState(state: PushState, title: string, url: string){ History.current().replaceState(state, title, url); },
-        pushState(state: PushState, title: string, url: string)   { History.current().pushState(state, title, url); },
+            replaceState(state: PushState, title: string, url: string){ History.current().replaceState(state, title, url); },
+            pushState(state: PushState, title: string, url: string)   { History.current().pushState(state, title, url); },
 
-        get scrollRestoration()    { return realHistory.scrollRestoration; },
-        set scrollRestoration(val) { realHistory.scrollRestoration = val; },
-    }});
-
+            get scrollRestoration()    { return realHistory.scrollRestoration; },
+            set scrollRestoration(val) { realHistory.scrollRestoration = val; },
+        }});
+    }
 }

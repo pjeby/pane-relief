@@ -7,7 +7,7 @@
   "license": "ISC",
   "devDependencies": {
     "monkey-around": "^2.3.0",
-    "obsidian": "0.14.5",
+    "obsidian": "0.15.4",
     "ophidian": "git://github.com/pjeby/ophidian.git"
   }
 }

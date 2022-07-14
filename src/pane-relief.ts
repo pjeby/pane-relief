@@ -1,9 +1,10 @@
-import {Plugin, TFile, WorkspaceTabs} from 'obsidian';
-import { use } from 'ophidian';
-import {addCommands, command} from "./commands";
-import {History, installHistory} from "./History";
-import { Maximizer } from './maximizing';
-import {Navigation, Navigator, onElement} from "./Navigator";
+import { Plugin, requireApiVersion, TFile, WorkspaceTabs } from "obsidian";
+import { numWindows, use } from "ophidian";
+import { addCommands, command } from "./commands";
+import { FocusLock } from "./focus-lock";
+import { History, HistoryManager } from "./History";
+import { Maximizer } from "./maximizing";
+import { Navigation, Navigator } from "./Navigator";
 
 import "./styles.scss";
 
@@ -50,7 +51,8 @@ export default class PaneRelief extends Plugin {
     max = this.addChild(new Maximizer);
 
     onload() {
-        installHistory(this);
+        this.use(HistoryManager).load();  // Install history before anything else
+
         this.app.workspace.registerHoverLinkSource(Navigator.hoverSource, {
             display: 'History dropdowns', defaultMod: true
         });
@@ -68,6 +70,7 @@ export default class PaneRelief extends Plugin {
             );
         });
         addCommands(this);
+        if (requireApiVersion("0.15.6")) this.use(FocusLock);
     }
 
     [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); }
@@ -76,8 +79,8 @@ export default class PaneRelief extends Plugin {
     [command("go-prev",  "Cycle to previous workspace pane",   "Mod+PageUp"  )] () { return () => this.gotoNthLeaf(-1, true); }
     [command("go-next",  "Cycle to next workspace pane",       "Mod+PageDown")] () { return () => this.gotoNthLeaf( 1, true); }
 
-    [command("win-prev", "Cycle to previous window", [] )] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(-1, true); }
-    [command("win-next", "Cycle to next window",     [] )] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow( 1, true); }
+    [command("win-prev", "Cycle to previous window", [] )] () { if (numWindows() > 1) return () => this.gotoNthWindow(-1, true); }
+    [command("win-next", "Cycle to next window",     [] )] () { if (numWindows() > 1) return () => this.gotoNthWindow( 1, true); }
 
     [command("go-1st",   "Jump to 1st pane in the workspace",  "Alt+1")] () { return () => this.gotoNthLeaf(0); }
     [command("go-2nd",   "Jump to 2nd pane in the workspace",  "Alt+2")] () { return () => this.gotoNthLeaf(1); }
@@ -89,15 +92,15 @@ export default class PaneRelief extends Plugin {
     [command("go-8th",   "Jump to 8th pane in the workspace",  "Alt+8")] () { return () => this.gotoNthLeaf(7); }
     [command("go-last",  "Jump to last pane in the workspace", "Alt+9")] () { return () => this.gotoNthLeaf(99999999); }
 
-    [command("win-1st",   "Switch to 1st window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(0); }
-    [command("win-2nd",   "Switch to 2nd window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(1); }
-    [command("win-3rd",   "Switch to 3rd window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(2); }
-    [command("win-4th",   "Switch to 4th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(3); }
-    [command("win-5th",   "Switch to 5th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(4); }
-    [command("win-6th",   "Switch to 6th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(5); }
-    [command("win-7th",   "Switch to 7th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(6); }
-    [command("win-8th",   "Switch to 8th window",  [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(7); }
-    [command("win-last",  "Switch to last window", [])] () { if (app.workspace.floatingSplit?.children.length) return () => this.gotoNthWindow(99999999); }
+    [command("win-1st",   "Switch to 1st window",  [])] () { if (numWindows() > 1) return () => this.gotoNthWindow(0); }
+    [command("win-2nd",   "Switch to 2nd window",  [])] () { if (numWindows() > 1) return () => this.gotoNthWindow(1); }
+    [command("win-3rd",   "Switch to 3rd window",  [])] () { if (numWindows() > 2) return () => this.gotoNthWindow(2); }
+    [command("win-4th",   "Switch to 4th window",  [])] () { if (numWindows() > 3) return () => this.gotoNthWindow(3); }
+    [command("win-5th",   "Switch to 5th window",  [])] () { if (numWindows() > 4) return () => this.gotoNthWindow(4); }
+    [command("win-6th",   "Switch to 6th window",  [])] () { if (numWindows() > 5) return () => this.gotoNthWindow(5); }
+    [command("win-7th",   "Switch to 7th window",  [])] () { if (numWindows() > 6) return () => this.gotoNthWindow(6); }
+    [command("win-8th",   "Switch to 8th window",  [])] () { if (numWindows() > 7) return () => this.gotoNthWindow(7); }
+    [command("win-last",  "Switch to last window", [])] () { if (numWindows() > 1) return () => this.gotoNthWindow(99999999); }
 
     [command("put-1st",  "Place as 1st pane in the split",     "Mod+Alt+1")] () { return () => this.placeLeaf(0, false); }
     [command("put-2nd",  "Place as 2nd pane in the split",     "Mod+Alt+2")] () { return () => this.placeLeaf(1, false); }
@@ -194,18 +197,6 @@ export default class PaneRelief extends Plugin {
                 this.app.workspace.setActiveLeaf(leaf, false, true)
             }
         }
-    }
-
-    isSyntheticHistoryEvent(button: number) {
-        const win = this.nav.windows().filter(win =>
-            win.event && (win.event as MouseEvent).button === button
-        ).pop();
-        if (win && win.event.type === "mousedown") {
-            win.event.preventDefault();
-            win.event.stopImmediatePropagation();
-            return true;
-        }
-        return false;
     }
 }
 

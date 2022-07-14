@@ -6,6 +6,7 @@ This plugin helps relieve the "pane" of managing lots of panes in [Obsidian.md](
 - Commands to move between panes or windows, move panes around, jump to the Nth pane, etc.
 - An intelligent pane maximizing command
 - Optional [per-pane navigation buttons](#per-pane-navigation-buttons) and [pane numbering](#pane-numbering)
+- [Focus lock](#focus-lock) for Obsidian 0.15.6+, to stop sidebar panes stealing focus (NEW in 0.2.1)
 
 The overall goal of these features is to provide a more browser-like Obsidian experience for users that like using lots of panes, windows, and/or Hover Editors.
 
@@ -44,6 +45,12 @@ To see the full list of commands and view or change their key assignments, visit
 ### Maximize Active Pane
 
 As of version 0.1.6, Pane Relief also includes a "Maximize Active Pane" command that is compatible with the Hover Editor plugin and the popout windows of Obsidian 0.15.3+.  If you were previously using the "Maximize Active Pane" plugin, you may wish to switch to disable that plugin and assign the hotkey to Pane Relief's version instead.
+
+### Focus Lock
+
+As of version 0.2.1, Pane Relief allows you to block sidebar panes from receiving focus (and thereby stealing keystrokes or opening links in the wrong pane(s)), using its focus lock function.  If you are on Obsidian 0.15.6 or above, a clickable lock symbol appears in the status bar, and a keyboard command is also available to toggle the feature on and off (in case you want to edit a note in your sidebar, use keyboard navigation in the file explorer, etc.)
+
+The toggle's current state is saved with your workspace, so it persists across Obsidian restarts, and if you're using Workspaces or Workspaces Plus, each workspace can have a different state.  (Focus lock will default to "off" in new workspaces, so if you want it on in your current workspaces you will have to turn it on in each one the first time.)
 
 ## Installation
 
