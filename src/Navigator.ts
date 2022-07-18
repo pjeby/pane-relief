@@ -1,6 +1,6 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem} from 'obsidian';
 import {domLeaves, History, HistoryEntry} from "./History";
-import {PerWindowComponent} from "ophidian";
+import {PerWindowComponent} from "@ophidian/core";
 
 declare module "obsidian" {
     interface Menu {

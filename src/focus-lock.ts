@@ -1,12 +1,12 @@
 import { around } from "monkey-around";
 import { Notice, Plugin, setIcon, Workspace, WorkspaceLeaf } from "obsidian";
-import { LayoutSetting, Service } from "ophidian";
+import { LayoutSetting, Service } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { setTooltip } from "./Navigator";
 
 const FOCUS_LOCK = "pane-relief:focus-lock";
 
-declare module "ophidian" {
+declare module "@ophidian/core" {
     interface LayoutSettings {
         [FOCUS_LOCK]: boolean
     }

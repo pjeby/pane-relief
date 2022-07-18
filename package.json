@@ -6,8 +6,9 @@
   },
   "license": "ISC",
   "devDependencies": {
+    "@ophidian/build": "^1",
+    "@ophidian/core": "git://github.com/ophidian-lib/core.git",
     "monkey-around": "^2.3.0",
-    "obsidian": "0.15.4",
-    "ophidian": "git://github.com/pjeby/ophidian.git"
+    "obsidian": "0.15.4"
   }
 }

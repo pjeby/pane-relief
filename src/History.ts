@@ -1,6 +1,6 @@
 import {Notice, TAbstractFile, ViewState, WorkspaceLeaf} from 'obsidian';
 import {around} from "monkey-around";
-import {LayoutStorage, Service, windowEvent} from "ophidian";
+import {LayoutStorage, Service, windowEvent} from "@ophidian/core";
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";

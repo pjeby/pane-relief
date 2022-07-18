@@ -1,5 +1,5 @@
 import { Plugin, requireApiVersion, TFile, WorkspaceTabs } from "obsidian";
-import { numWindows, use } from "ophidian";
+import { numWindows, use } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { FocusLock } from "./focus-lock";
 import { History, HistoryManager } from "./History";
