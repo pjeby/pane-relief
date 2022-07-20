@@ -4,7 +4,15 @@
 }
 
 /* Give history counts a little breathing room, and match the title text size */
-.titlebar .history-counter { font-size: 12px; padding-left: 3px; padding-right: 3px;}
+.titlebar-button.mod-back { text-align: right; }
+
+.titlebar .history-counter {
+  font-size: 12px;
+  padding-left: 3px;
+  padding-right: 3px;
+  display: inline-block;
+  min-width: 2em;
+}
 
 /* Make the button and text more visible when you can go in that direction */
 .titlebar-button.mod-back.mod-active:not(:hover),
