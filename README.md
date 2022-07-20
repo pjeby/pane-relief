@@ -62,6 +62,10 @@ If you encounter any problems with the plugin, please file bug reports to this r
 
 ## Styling And Integration
 
+### Style Settings
+
+Two commonly requested style features are 1) disabling history counts in the titlebar, and 2) adding numbers to panes.  These options are now available via the [Style Settings plugin](https://obsidian.md/plugins?id=obsidian-style-settings) -- just install it and go to its settings: there will be toggles for "Disable history counts" and "Number panes".
+
 ### Per-pane Navigation Buttons
 
 If you'd like to have each pane get its own back/forward buttons with all of Pane Relief's features available, you can install the [Custom Page Headers and Title Bar Buttons](https://obsidian.md/plugins?id=customizable-page-header-buttons) plugin, enable it, and then configure it as follows:
@@ -84,7 +88,7 @@ Note: these classes don't apply to hover editors with just a single pane, but if
 
 ### Pane Numbering
 
-To support theming and CSS snippets that may want to show pane shortcut position numbers, Pane Relief adds a class (`.has-pane-relief-label`) and a variable (`--pane-relief-label`) to the first 8 (and last) workspace leaves.  The variable gives a number that can be used with `counter-reset` and `content` to label the panes using appropriate CSS.  Here's a short CSS snippet that puts the numbers in the pane headers, and works reasonably well with the Sliding Panes plugin:
+If you install the Style Settings plugin, you can turn on pane numbering in its options page.  But for custom theming and CSS snippets that may want to show pane shortcut position numbers, Pane Relief adds a class (`.has-pane-relief-label`) and a variable (`--pane-relief-label`) to the first 8 (and last) workspace leaves.  The variable gives a number that can be used with `counter-reset` and `content` to label the panes using appropriate CSS.  Here's a short CSS snippet that puts the numbers in the pane headers, and works reasonably well with the Sliding Panes plugin:
 
 ```css
 /* Number panes in their headers */

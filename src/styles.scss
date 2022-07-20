@@ -23,3 +23,45 @@ body > .popover.hover-popover .workspace-split.should-maximize
       flex-basis: calc(100% - 4px); // 4px is for scrollbar width
     }
 }
+
+/* Pane Numbering */
+
+body.pane-relief-pane-numbering {
+  /* Number panes in their headers */
+  .workspace-split .workspace-leaf .view-header-icon { min-width: fit-content; }
+  .workspace-split .workspace-leaf .view-header-icon::before
+  {
+      content: "";
+      display: inline-flex;
+      position: relative;
+      bottom: 3px;
+      min-inline-size: 1em;
+  }
+  .workspace-split .workspace-leaf.has-pane-relief-label .view-header-icon::before
+  {
+      counter-reset: pane-number var(--pane-relief-label);
+      content: counter(pane-number);
+  }
+
+  /* Number panes in "koncham workspace" plugin's Center Panes view */
+  .workspace-leaf-content[data-type="center-panes"]
+  { counter-reset: pane-number;}
+
+  .workspace-leaf-content[data-type="center-panes"] .nav-file
+  { counter-increment: pane-number;}
+
+  .workspace-leaf-content[data-type="center-panes"] .nav-file-title-content::before
+  {
+      content: counter(pane-number) " ";
+      min-width: 1.5em;
+      display: inline-block;
+  }
+
+  .workspace-leaf-content[data-type="center-panes"] .nav-file:nth-child(8) ~ .nav-file .nav-file-title-content::before
+  { content: " "; }
+  .workspace-leaf-content[data-type="center-panes"] .nav-file:nth-child(8) ~ .nav-file:last-child .nav-file-title-content::before
+  { content: "9 " !important; }
+}
+
+/* Disable history counts */
+body.pane-relief-disable-counts .titlebar .history-counter { display: none; }
