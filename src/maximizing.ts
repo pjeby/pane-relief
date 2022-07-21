@@ -1,5 +1,6 @@
+import { Service } from "@ophidian/core";
 import { around } from "monkey-around";
-import { Component, debounce, WorkspaceItem, WorkspaceLeaf, WorkspaceParent } from "obsidian";
+import { debounce, WorkspaceLeaf } from "obsidian";
 
 declare module "obsidian" {
     interface Workspace {
@@ -27,7 +28,7 @@ function toggleClass(el: Element, cls: string, state?: boolean): boolean {
     return state;
 }
 
-export class Maximizer extends Component {
+export class Maximizer extends Service {
 
     onload() {
         this.registerEvent(app.workspace.on("layout-change", () => {

@@ -1,5 +1,5 @@
 import { Plugin, requireApiVersion, TFile, WorkspaceTabs } from "obsidian";
-import { numWindows, use } from "@ophidian/core";
+import { numWindows, use, StyleSettings } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { FocusLock } from "./focus-lock";
 import { History, HistoryManager } from "./History";
@@ -48,7 +48,7 @@ declare module "obsidian" {
 export default class PaneRelief extends Plugin {
     use = use.plugin(this);
     nav = this.use(Navigation).watch();
-    max = this.addChild(new Maximizer);
+    max = this.use(Maximizer);
 
     onload() {
         this.use(HistoryManager).load();  // Install history before anything else
@@ -71,6 +71,7 @@ export default class PaneRelief extends Plugin {
         });
         addCommands(this);
         if (requireApiVersion("0.15.6")) this.use(FocusLock);
+        this.use(StyleSettings)
     }
 
     [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); }
