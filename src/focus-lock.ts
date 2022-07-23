@@ -1,6 +1,6 @@
 import { around } from "monkey-around";
 import { Notice, Plugin, setIcon, Workspace, WorkspaceLeaf } from "obsidian";
-import { LayoutSetting, Service } from "@ophidian/core";
+import { defer, LayoutSetting, Service } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { setTooltip } from "./Navigator";
 
@@ -52,7 +52,34 @@ export class FocusLock extends Service {
                     return old.call(this) && (!self.isLocked || isMain(this));
                 }
             }
-        }))
+        }));
+        this.register(around((app as any).internalPlugins.plugins["file-explorer"].instance, {
+            init(old) { return function init(...args: any[]) {
+                try { return old.apply(this, args); } finally { self.blockFileExplorerReveal(); }
+            }}
+        }));
+        this.blockFileExplorerReveal();
+    }
+
+    blockFileExplorerReveal() {
+        const self = this;
+        const raf = (app.commands as any).commands["file-explorer:reveal-active-file"];
+        if (raf) this.register(around(raf, {
+            checkCallback(old) {
+                return function (...args: any[]) {
+                    if (self.isLocked) for (const leaf of app.workspace.getLeavesOfType("file-explorer")) {
+                        if (!isMain(leaf)) {
+                            const el: HTMLElement = (leaf.view as any).dom?.navFileContainerEl;
+                            el && defer(around(el, {focus(old) {
+                                // Block focus stealing
+                                return function() {};
+                            }}));
+                        }
+                    }
+                    return old?.apply(this, args);
+                }
+            }
+        }));
     }
 
     toggle() {
