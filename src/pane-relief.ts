@@ -1,4 +1,4 @@
-import { Plugin, requireApiVersion, TFile, WorkspaceTabs } from "obsidian";
+import { Plugin, requireApiVersion, TFile, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
 import { numWindows, use, StyleSettings } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { FocusLock } from "./focus-lock";
@@ -116,6 +116,17 @@ export default class PaneRelief extends Plugin {
     [command("maximize", "Maximize active pane (Toggle)", [])] () {
         if (this.max.parentForLeaf(app.workspace.activeLeaf)) return () => this.max.toggleMaximize();
     }
+
+    [command("ordered-close", "Close pane and go to adjacent pane")] () { return () => {
+        const toClose = app.workspace.activeLeaf, leaves = this.nav.forLeaf(toClose).leaves(), pos = leaves.indexOf(toClose);
+        let toSwitch: WorkspaceLeaf;
+        if (pos > -1) {
+            if (leaves.length > pos+1) toSwitch = leaves[pos+1];
+            else if (pos > 0) toSwitch = leaves[pos-1];
+        }
+        if (toSwitch) app.workspace.setActiveLeaf(toSwitch, false, true);
+        toClose.detach();
+    }}
 
     onunload() {
         this.app.workspace.unregisterHoverLinkSource(Navigator.hoverSource);

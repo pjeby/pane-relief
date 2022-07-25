@@ -7,10 +7,11 @@ This plugin helps relieve the "pane" of managing lots of panes in [Obsidian.md](
 - An intelligent pane maximizing command
 - Optional [per-pane navigation buttons](#per-pane-navigation-buttons) and [pane numbering](#pane-numbering)
 - [Focus lock](#focus-lock) for Obsidian 0.15.6+, to stop sidebar panes stealing focus (NEW in 0.2.1)
+- A browser-style "close" command that activates an adjacent pane instead of the most-recently used one (NEW in 0.2.6)
 
 The overall goal of these features is to provide a more browser-like Obsidian experience for users that like using lots of panes, windows, and/or Hover Editors.
 
-(Note: this plugin adds a lot of preconfigured hotkeys.  You may want to install the [Hotkey Helper](https://obsidian.md/plugins?id=hotkey-helper) plugin first, so you can easily see and resolve any conflicts, or update the keys to better suit your preferences.)
+(Note: this plugin adds a lot of preconfigured hotkeys.  You may want to install the [Hotkey Helper](https://obsidian.md/plugins?id=hotkey-helper) plugin first, so you can easily see and resolve any conflicts, update the keys to better suit your preferences, and assign hotkeys for the commands that don't have a default.)
 
 ### Per-Pane Navigation History
 
