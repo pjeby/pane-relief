@@ -67,6 +67,10 @@ If you encounter any problems with the plugin, please file bug reports to this r
 
 Two commonly requested style features are 1) disabling history counts in the titlebar, and 2) adding numbers to panes.  These options are now available via the [Style Settings plugin](https://obsidian.md/plugins?id=obsidian-style-settings) -- just install it and go to its settings: there will be toggles for "Disable history counts" and "Number panes".
 
+### Centralized Pane Lists
+
+Two other plugins that work well with Pane Relief for navigating between panes are [Quick Switcher++](https://obsidian.md/plugins?id=darlal-switcher-plus) and [Koncham Workspace](https://obsidian.md/plugins?id=koncham-workspace).  Quick Switcher++ lets you assign a hotkey to pop up a list of open notes and jump directly to the pane (even across multiple windows or hover editors), and Koncham Workspace lets you have a sidebar pane listing the contents of all your main window's center area panes and hover editors (that you can click to jump to).
+
 ### Per-pane Navigation Buttons
 
 If you'd like to have each pane get its own back/forward buttons with all of Pane Relief's features available, you can install the [Custom Page Headers and Title Bar Buttons](https://obsidian.md/plugins?id=customizable-page-header-buttons) plugin, enable it, and then configure it as follows:
