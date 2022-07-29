@@ -8,7 +8,7 @@ specifiers:
 
 devDependencies:
   '@ophidian/build': 1.0.0
-  '@ophidian/core': github.com/ophidian-lib/core/648565cb50100446f7810f0d19942fe48564550a
+  '@ophidian/core': github.com/ophidian-lib/core/1ba517fbec56c973cee70e05b5a0ddf6a6d33b22
   monkey-around: 2.3.0
   obsidian: 0.15.4
 
@@ -835,10 +835,10 @@ packages:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
     dev: true
 
-  github.com/ophidian-lib/core/648565cb50100446f7810f0d19942fe48564550a:
-    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/648565cb50100446f7810f0d19942fe48564550a}
+  github.com/ophidian-lib/core/1ba517fbec56c973cee70e05b5a0ddf6a6d33b22:
+    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/1ba517fbec56c973cee70e05b5a0ddf6a6d33b22}
     name: '@ophidian/core'
-    version: 0.0.8
+    version: 0.0.9
     dependencies:
       monkey-around: 2.3.0
       obsidian: 0.15.4

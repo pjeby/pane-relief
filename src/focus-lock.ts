@@ -43,8 +43,16 @@ export class FocusLock extends Service {
                 if (!self.isLocked || isMain(leaf)) return old.call(this, leaf, pushHistory, focus);
                 // Handle the case where there was no prior active leaf
                 if (!this.activeLeaf || !this.isLeafAttached(this.activeLeaf))
-                    return old.call(this, this.getUnpinnedLeaf(), pushHistory, focus);
-            }}
+                    return old.call(this, this.getLeaf(), pushHistory, focus);
+            }},
+            revealLeaf(old) {
+                return function(leaf: WorkspaceLeaf) {
+                    const container = leaf.getContainer();
+                    if (!self.isLocked || isMain(leaf) || !container) return old.call(this, leaf);
+                    const remove = around(container, {focus() { return function() {}; }});
+                    try { return old.call(this, leaf); } finally { remove(); }
+                }
+            }
         }));
         this.register(around(WorkspaceLeaf.prototype, {
             canNavigate(old) {
