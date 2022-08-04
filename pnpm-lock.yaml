@@ -1,14 +1,14 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@ophidian/build': ^1
+  '@ophidian/build': ^1.0.1
   '@ophidian/core': git://github.com/ophidian-lib/core.git
   monkey-around: ^2.3.0
   obsidian: 0.15.4
 
 devDependencies:
-  '@ophidian/build': 1.0.0
-  '@ophidian/core': github.com/ophidian-lib/core/1ba517fbec56c973cee70e05b5a0ddf6a6d33b22
+  '@ophidian/build': 1.0.1
+  '@ophidian/core': github.com/ophidian-lib/core/65ad44e4d0039aa026e12e32e772a36b8bf2650a
   monkey-around: 2.3.0
   obsidian: 0.15.4
 
@@ -35,8 +35,8 @@ packages:
       fastq: 1.13.0
     dev: true
 
-  /@ophidian/build/1.0.0:
-    resolution: {integrity: sha512-NdwmN78QMFlA7ZAQUp4PjUOc16mpB8QJ2O9ZYl9iteT5N13qGtOE+4G6Prh8Zs+2RFYTm+/y7tOoOoiYCIpw8A==}
+  /@ophidian/build/1.0.1:
+    resolution: {integrity: sha512-0JGtb1GdCIcC91qUM4GuWzySKIXNg0wvlDeDThAIpruzJjDS3w5OrBmx1XVHqksKHPml3zpuRYhD9eXPUx+sJA==}
     dependencies:
       builtin-modules: 3.3.0
       copy-newer: 2.1.2
@@ -44,6 +44,7 @@ packages:
       esbuild-plugin-copy: 1.3.0_esbuild@0.14.49
       esbuild-plugin-sass: 1.0.1_esbuild@0.14.49
       fs-extra: 10.1.0
+      monkey-around: 2.3.0
     dev: true
 
   /@types/codemirror/0.0.108:
@@ -835,10 +836,10 @@ packages:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
     dev: true
 
-  github.com/ophidian-lib/core/1ba517fbec56c973cee70e05b5a0ddf6a6d33b22:
-    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/1ba517fbec56c973cee70e05b5a0ddf6a6d33b22}
+  github.com/ophidian-lib/core/65ad44e4d0039aa026e12e32e772a36b8bf2650a:
+    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/65ad44e4d0039aa026e12e32e772a36b8bf2650a}
     name: '@ophidian/core'
-    version: 0.0.9
+    version: 0.0.11
     dependencies:
       monkey-around: 2.3.0
       obsidian: 0.15.4
