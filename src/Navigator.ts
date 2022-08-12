@@ -5,6 +5,7 @@ import {PerWindowComponent} from "@ophidian/core";
 declare module "obsidian" {
     interface Menu {
         dom: HTMLElement
+        setUseNativeMenu?(flag: boolean): void;  // 0.16 to force HTML menu
     }
     interface MenuItem {
         dom: HTMLElement
@@ -267,6 +268,7 @@ export class Navigator extends Component {
         const states = history[this.dir < 0 ? "lookBehind" : "lookAhead"]();
         if (!states.length) return;
         const menu = new Menu();
+        menu.setUseNativeMenu?.(false);  // 0.16: force HTML menu
         menu.dom.addClass("pane-relief-history-menu");
         menu.dom.on("mousedown", ".menu-item", e => {e.stopPropagation();}, true);
         states.map(this.formatState.bind(this)).forEach(

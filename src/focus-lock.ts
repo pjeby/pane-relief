@@ -1,6 +1,6 @@
 import { around } from "monkey-around";
 import { Notice, Plugin, setIcon, Workspace, WorkspaceLeaf } from "obsidian";
-import { defer, LayoutSetting, Service } from "@ophidian/core";
+import { defer, isLeafAttached, LayoutSetting, Service } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { setTooltip } from "./Navigator";
 
@@ -42,7 +42,7 @@ export class FocusLock extends Service {
             setActiveLeaf(old) { return function(this: Workspace, leaf, pushHistory, focus) {
                 if (!self.isLocked || isMain(leaf)) return old.call(this, leaf, pushHistory, focus);
                 // Handle the case where there was no prior active leaf
-                if (!this.activeLeaf || !this.isLeafAttached(this.activeLeaf))
+                if (!this.activeLeaf || !isLeafAttached(this.activeLeaf))
                     return old.call(this, this.getLeaf(), pushHistory, focus);
             }},
             revealLeaf(old) {
@@ -111,7 +111,7 @@ export class FocusLock extends Service {
             "Sidebar focus disabled: click to enable" :
             "Sidebar focus enabled: click to disable"
         );
-        if (shouldLock && !isMain(app.workspace.activeLeaf)) {
+        if (shouldLock && !isMain(app.workspace.activeLeaf) && app.workspace.layoutReady) {
             // Leave the sidebar
             app.workspace.setActiveLeaf(app.workspace.getUnpinnedLeaf(), false, true);
         }
@@ -125,9 +125,6 @@ function isMain(leaf: WorkspaceLeaf) {
 }
 
 declare module "obsidian" {
-    interface Workspace {
-        isLeafAttached(leaf: WorkspaceLeaf): boolean
-    }
     interface WorkspaceLeaf {
         canNavigate(): boolean
     }

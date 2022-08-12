@@ -97,7 +97,7 @@ export class Maximizer extends Service {
             parent.hasClass("should-maximize") ? this.lastMaximized(parent) : null
     ) {
         const hadMax = parent.hasClass("has-maximized");
-        parent.findAllSelf(".workspace-split").forEach(split => {
+        parent.findAllSelf(".workspace-split, .workspace-tabs").forEach(split => {
             if (split === parent || this.parentFor(split) === parent)
                 toggleClass(split, "has-maximized", leafEl ? split.contains(leafEl): false);
         });
