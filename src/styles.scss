@@ -19,11 +19,18 @@ settings:
     z-index: var(--layer-menu);
 }
 
+/* Don't space out buttons too much on 0.16 */@at-root
+body.show-inline-title {
+  .titlebar-button.mod-back, .titlebar-button.mod-forward {
+    padding: 0 6px;
+  }
+}
+
 /* Give history counts a little breathing room, and match the title text size */
 .titlebar-button.mod-back { text-align: right; }
 
 .titlebar .history-counter {
-  font-size: 12px;
+  font-size: var(--font-ui-small, 12px);
   padding-left: 3px;
   padding-right: 3px;
   display: inline-block;
@@ -31,8 +38,8 @@ settings:
 }
 
 /* Make the button and text more visible when you can go in that direction */
-.titlebar-button.mod-back.mod-active:not(:hover),
-.titlebar-button.mod-forward.mod-active:not(:hover)
+body:not(.show-inline-title).titlebar-button.mod-back.mod-active:not(:hover),
+body:not(.show-inline-title).titlebar-button.mod-forward.mod-active:not(:hover)
 { opacity: 0.75; }
 
 /* Maximizing */

@@ -211,7 +211,7 @@ export class Navigator extends Component {
     onload() {
         this.containerEl = this.owner.win.document.body.find(
             `.titlebar .titlebar-button-container.mod-left .titlebar-button.mod-${this.kind}`
-        );
+        ) || this.owner.win.createDiv();
         this.count = this.containerEl.createSpan({prepend: this.kind === "back", cls: "history-counter"});
         this.history = null;
         this.oldLabel = this.containerEl.getAttribute("aria-label");
