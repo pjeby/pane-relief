@@ -1,4 +1,4 @@
-import { Service } from "@ophidian/core";
+import { Service, toggleClass } from "@ophidian/core";
 import { around } from "monkey-around";
 import { debounce, WorkspaceLeaf } from "obsidian";
 
@@ -11,21 +11,6 @@ declare module "obsidian" {
             executeCommandById(id: string, event?: Event): boolean
         }
     }
-}
-
-/**
- * Efficiently update a class on a workspace item, only touching where changes are needed
- *
- * @param el The element to add or remove the class from
- * @param cls The class to add or remove
- * @param state Boolean, flag to add or remove, defaults to opposite of current state
- * @returns boolean for the state of the class afterwards
- */
-function toggleClass(el: Element, cls: string, state?: boolean): boolean {
-    const had = el.classList.contains(cls);
-    state = state ?? !had;
-    if (state !== had) { state ? el.classList.add(cls) : el.classList.remove(cls); }
-    return state;
 }
 
 export class Maximizer extends Service {

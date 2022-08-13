@@ -41,11 +41,13 @@ body > .popover.hover-popover .workspace-split.should-maximize
 {
     .workspace-leaf:not(.is-maximized),
     .workspace-tabs:not(.has-maximized),
+    .workspace-tabs.has-maximized > .workspace-tab-header-container,
     .workspace-split:not(.has-maximized) {
       display: none;
     }
     .workspace-leaf.is-maximized {
       flex-basis: calc(100% - 4px); // 4px is for scrollbar width
+      .view-header { display: flex; } // always show view header when maximized
     }
 }
 

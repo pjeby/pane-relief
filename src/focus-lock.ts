@@ -4,17 +4,9 @@ import { defer, isLeafAttached, LayoutSetting, Service } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { setTooltip } from "./Navigator";
 
-const FOCUS_LOCK = "pane-relief:focus-lock";
-
-declare module "@ophidian/core" {
-    interface LayoutSettings {
-        [FOCUS_LOCK]: boolean
-    }
-}
-
 export class FocusLock extends Service {
 
-    setting = new LayoutSetting(this, FOCUS_LOCK).of(app.workspace);
+    setting = new LayoutSetting<boolean, Workspace>(this, "pane-relief:focus-lock").of(app.workspace);
 
     plugin = this.use(Plugin);
     statusEl = this.plugin.addStatusBarItem();
