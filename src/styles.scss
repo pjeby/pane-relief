@@ -10,8 +10,20 @@ settings:
 
     -   id: pane-relief-disable-counts
         title: Disable history counts
-        descirption: Remove the forward/back counts on titlebar
+        description: Remove the forward/back counts on titlebar
         type: class-toggle
+
+    -   id: pr-sliding-panes-desktop-width
+        title: Sliding pane width on desktop
+        description: The width of a single pane (e.g. 700px, 30vw, etc.)
+        type: variable-text
+        default: 700px
+
+    -   id: pr-sliding-panes-mobile-width
+        title: Sliding pane width on mobile
+        description: The width of a single pane (e.g. 350px, 50vw, etc.)
+        type: variable-text
+        default: 350px
 */
 
 /* Ensure popovers are above the menu */
@@ -20,7 +32,7 @@ settings:
 }
 
 /* Don't space out buttons too much on 0.16 */@at-root
-body.show-inline-title {
+body.obsidian-themepocalypse {
   .titlebar-button.mod-back, .titlebar-button.mod-forward {
     padding: 0 6px;
   }
@@ -38,8 +50,8 @@ body.show-inline-title {
 }
 
 /* Make the button and text more visible when you can go in that direction */
-body:not(.show-inline-title).titlebar-button.mod-back.mod-active:not(:hover),
-body:not(.show-inline-title).titlebar-button.mod-forward.mod-active:not(:hover)
+body:not(.obsidian-themepocalypse).titlebar-button.mod-back.mod-active:not(:hover),
+body:not(.obsidian-themepocalypse).titlebar-button.mod-forward.mod-active:not(:hover)
 { opacity: 0.75; }
 
 /* Maximizing */
@@ -54,8 +66,44 @@ body > .popover.hover-popover .workspace-split.should-maximize
     }
     .workspace-leaf.is-maximized {
       flex-basis: calc(100% - 4px); // 4px is for scrollbar width
-      .view-header { display: flex; } // always show view header when maximized
+      .view-header {
+        display: flex;
+        .view-header-icon { display: inherit; }
+      } // always show view header when maximized
     }
+}
+
+/* Sliding Panes */
+
+:root {
+  --pr-sliding-panes-desktop-width: 700px;
+  --pr-sliding-panes-mobile-width: 350px;
+}
+
+body {
+  --pr-sliding-panes-width: var(--pr-sliding-panes-desktop-width);
+}
+
+body.is-mobile {
+  --pr-sliding-panes-width: var(--pr-sliding-panes-mobile-width);
+}
+
+.mod-root.is-sliding:not(.has-maximized) {
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  .workspace-tabs.mod-top .workspace-tab-header-spacer {
+    // Turn off draggable space that can block other things in sliding region
+    -webkit-app-region: no-drag;
+  }
+
+  &>*:not(:last-child:nth-child(2)) { // don't apply when only one pane
+    width: var(--pr-sliding-panes-width);
+    flex: none;
+    &.workspace-leaf {
+      display: block;  // turn off flex for leaves
+    }
+  }
 }
 
 /* Pane Numbering */

@@ -1,12 +1,14 @@
-import { Plugin, requireApiVersion, TFile, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
+import { Plugin, requireApiVersion, TFile, Workspace, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
 import { numWindows, use, StyleSettings } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { FocusLock } from "./focus-lock";
 import { History, HistoryManager } from "./History";
 import { Maximizer } from "./maximizing";
 import { Navigation, Navigator } from "./Navigator";
+import { SlidingPanes } from "./sliding";
 
 import "./styles.scss";
+import { around } from "monkey-around";
 
 declare module "obsidian" {
     interface Workspace {
@@ -15,6 +17,7 @@ declare module "obsidian" {
         unregisterHoverLinkSource(source: string): void
         iterateLeaves(callback: (item: WorkspaceLeaf) => unknown, item: WorkspaceParent): boolean;
         onLayoutChange(): void
+        getFocusedContainer(): WorkspaceContainer
     }
     interface App {
         plugins: {
@@ -49,9 +52,19 @@ export default class PaneRelief extends Plugin {
     use = use.plugin(this);
     nav = this.use(Navigation).watch();
     max = this.use(Maximizer);
+    sliding = this.use(SlidingPanes).watch();
 
     onload() {
         this.use(HistoryManager).load();  // Install history before anything else
+
+        // Ensure that closing a window refocuses most recent window
+        this.register(around(Workspace.prototype, {
+            getFocusedContainer(old) { return function gfc() {
+                const res = old.call(this);
+                if (res === this.rootSplit && window !== activeWindow) return null;
+                return res;
+            }; }
+        }));
 
         this.app.workspace.registerHoverLinkSource(Navigator.hoverSource, {
             display: 'History dropdowns', defaultMod: true
@@ -127,6 +140,10 @@ export default class PaneRelief extends Plugin {
         if (toSwitch) app.workspace.setActiveLeaf(toSwitch, false, true);
         toClose.detach();
     }}
+
+    [command("open-new-window", "Open new window")] () {
+        return () => app.workspace.openPopoutLeaf();
+    }
 
     onunload() {
         this.app.workspace.unregisterHoverLinkSource(Navigator.hoverSource);

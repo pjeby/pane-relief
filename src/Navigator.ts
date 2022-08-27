@@ -1,6 +1,12 @@
-import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem} from 'obsidian';
+import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion} from 'obsidian';
 import {domLeaves, History, HistoryEntry} from "./History";
 import {PerWindowComponent} from "@ophidian/core";
+
+declare global {
+    interface Window {
+        createDiv: typeof createDiv;
+    }
+}
 
 declare module "obsidian" {
     interface Menu {
@@ -105,6 +111,8 @@ export class Navigation extends PerWindowComponent {
         // history object if we don't (instead of our wrapper), and 2) we want the click to apply to the leaf
         // that was under the mouse, rather than whichever leaf was active.
         const {document} = this.win;
+        if (requireApiVersion("0.16.0")) document.body.addClass("obsidian-themepocalypse");
+
         document.addEventListener("mouseup", historyHandler, true);
         document.addEventListener("mousedown", historyHandler, true);
         this.register(() => {

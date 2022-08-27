@@ -69,12 +69,7 @@ export class Maximizer extends Service {
         return parent.find(".workspace-leaf.is-maximized") || app.workspace.getMostRecentLeaf().containerEl;
     }
 
-    fixSlidingPanes = debounce(() => {
-        if ((app.plugins.plugins as any)["sliding-panes-obsidian"]) {
-            app.workspace.onLayoutChange();
-            app.workspace.requestActiveLeafEvents();
-        }
-    }, 5);
+    fixSlidingPanes = debounce(() => { app.workspace.requestActiveLeafEvents(); }, 5);
 
     refresh(
         parent: Element,
