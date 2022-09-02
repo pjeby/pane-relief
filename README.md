@@ -8,7 +8,7 @@ This plugin helps relieve the "pane" of managing lots of panes in [Obsidian.md](
 - Optional [per-pane navigation buttons](#per-pane-navigation-buttons) and [pane numbering](#pane-numbering)
 - [Focus lock](#focus-lock) for Obsidian 0.15.6+, to stop sidebar panes stealing focus
 - A browser-style "close" command that activates an adjacent pane instead of the most-recently used one
-- A [Simple Sliding Panes mode](#simple-sliding-panes-mode) that can be toggled per-window and is compatible with Obsidian 0.16 (NEW in 0.3.0)
+- A [Simple Sliding Panes mode](#simple-sliding-panes-mode) that can be toggled per-window and is compatible with Obsidian 0.16.2 and its new stacked tabs (NEW in 0.3.1)
 
 The overall goal of these features is to provide a more browser-like Obsidian experience for users that like using lots of panes, windows, and/or Hover Editors.
 
@@ -50,11 +50,11 @@ As of version 0.1.6, Pane Relief also includes a "Maximize Active Pane" command 
 
 ### Simple Sliding Panes Mode
 
-As of version 0.3.0, Pane Relief includes a "Toggle sliding panes" command that lets you make each window's workspace horizontally scrollable with fixed-width panes, instead of a limited width divided between them.  This is similar to, but more limited than the "classic" Sliding Panes plugin, as it does not support variable-width panes, pane stacking, or header rotation.  But on the other hand, it works with Obsidian 0.16 and can be toggled on a per-window and per-workspace basis.  (The state is saved across Obsidian restarts and workspace save/load.)
+As of version 0.3.0, Pane Relief includes a "Toggle sliding panes" command that lets you make each window's workspace horizontally scrollable with fixed-width panes, instead of a limited width divided between them.  This is similar to the "classic" Sliding Panes plugin, but without the stacking and header rotation that are now supplied natively by Obsidian 0.16.2.  Sliding can be toggled on or off on a per-window basis, and the state is saved across Obsidian restarts and workspace save/load.
 
-By default, panes will be 700px wide, but if you use the Style Settings plugin you can configure the width to any CSS value.
+By default, panes will be 700px wide, but if you use the Style Settings plugin you can configure the width to any CSS value.  If you are using Obsidian 0.16.2's "stacked tabs", the width of the tab headers will be added to this value, so that your available space in each pane won't shrink as you add more tabs.  (This can be useful even if you don't create multiple panes or tab groups!)  This feature should be considered beta, however, and scrolling may be jumpy or require manual adjustment if a given stacked tab set does not fit the application window.
 
-Please note that if you are migrating from the standalone Sliding Panes plugin, you must both *disable* it (not just turn off sliding panes!) **and** restart Obsidian before trying to use Pane Relief's sliding panes.  This is because the Sliding Panes plugin does not properly uninstall all of its hooks when disabled, and it will interfere with Pane Relief's sliding panes if left active.
+Please note that if you are migrating from the standalone Sliding Panes plugin, you must both *disable* it (not just turn off sliding panes!) **and** restart Obsidian before trying to use Pane Relief's sliding panes (or Obsidian's stacked tabs, for that matter).  This is because the Sliding Panes plugin does not properly uninstall all of its hooks when disabled, and it will interfere with Pane Relief's sliding panes if left active.
 
 ### Focus Lock
 

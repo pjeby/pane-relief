@@ -31,10 +31,13 @@ settings:
     z-index: var(--layer-menu);
 }
 
-/* Don't space out buttons too much on 0.16 */@at-root
+/* Don't space out buttons too much on 0.16 */
 body.obsidian-themepocalypse {
   .titlebar-button.mod-back, .titlebar-button.mod-forward {
     padding: 0 6px;
+  }
+  .titlebar-button-container {
+    display: flex;
   }
 }
 
@@ -92,6 +95,28 @@ body.is-mobile {
   overflow-x: auto;
   overflow-y: hidden;
 
+  /* Keep right sidebar toggle visible on 0.16, courtesy @ebullient */
+  div.workspace-tabs.mod-top.mod-top-right-space .workspace-tab-header-container {
+    padding-right: var(--ribbon-width);
+    body.is-hidden-frameless:not(.is-fullscreen) & {
+      padding-right: calc(var(--ribbon-width) + var(--frame-right-space));
+    }
+  }
+  div.sidebar-toggle-button.mod-right {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--ribbon-width);
+    background-color: var(--tab-container-background);
+    z-index: var(--layer-sidedock);
+    body.is-frameless:not(.is-hidden-frameless) & {
+      top: var(--titlebar-height);
+    }
+    body.is-hidden-frameless:not(.is-fullscreen) & {
+      right: var(--frame-right-space);
+    }
+  }
+
   .workspace-tabs.mod-top .workspace-tab-header-spacer {
     // Turn off draggable space that can block other things in sliding region
     -webkit-app-region: no-drag;
@@ -104,20 +129,29 @@ body.is-mobile {
       display: block;  // turn off flex for leaves
     }
   }
+  &>.workspace-tabs.mod-stacked {
+    min-width: calc(var(--pr-sliding-panes-width) + var(--tab-stacked-header-width)*var(--pane-relief-tab-count));
+  }
+  &>.workspace-tabs.mod-stacked:not(:last-child:nth-child(2)) {
+    width: calc(var(--pr-sliding-panes-width) + var(--tab-stacked-header-width)*var(--pane-relief-tab-count));
+  }
 }
 
 /* Pane Numbering */
 
+body { --pr-pane-number-bottom: 3px; }
+body.obsidian-themepocalypse { --pr-pane-number-bottom: 0px; }
+
 body.pane-relief-pane-numbering {
   /* Number panes in their headers */
-  .workspace-split .workspace-leaf .view-header-icon { min-width: fit-content; }
+  .workspace-split .workspace-leaf .view-header-icon { min-width: fit-content; display: inherit; }
   .workspace-split .workspace-leaf .view-header-icon::before
   {
       content: "";
       display: inline-flex;
       position: relative;
-      bottom: 3px;
       min-inline-size: 1em;
+      bottom: var(--pr-pane-number-bottom);
   }
   .workspace-split .workspace-leaf.has-pane-relief-label .view-header-icon::before
   {

@@ -177,18 +177,24 @@ export class Navigation extends PerWindowComponent {
 
     numberPanes() {
         this.win.requestAnimationFrame(() => {
+            const tabCounts = new Map<WorkspaceTabs, number>();
             // unnumber sidebar panes in main window, if something was moved there
-            if (this.win === window) this.unNumberPanes(".workspace-tabs > .workspace-leaf");
+            if (this.win === window) this.unNumberPanes(".workspace > .workspace-split:not(.mod-root) .workspace-tabs > .workspace-leaf");
             let count = 0, lastLeaf: WorkspaceLeaf = null;
             this.leaves().forEach(leaf => {
                 leaf.containerEl.style.setProperty("--pane-relief-label", ++count < 9 ? ""+count : "");
                 leaf.containerEl.toggleClass("has-pane-relief-label", count<9);
                 lastLeaf = leaf;
                 this.updateLeaf(leaf);
+                if (leaf.parentSplit instanceof WorkspaceTabs)
+                    tabCounts.set(leaf.parentSplit, 1 + (tabCounts.get(leaf.parentSplit) || 0));
             });
             if (count>8) {
                 lastLeaf?.containerEl.style.setProperty("--pane-relief-label", "9");
                 lastLeaf?.containerEl.toggleClass("has-pane-relief-label", true);
+            }
+            for (const [tab, count] of tabCounts.entries()) {
+                tab.containerEl.style.setProperty("--pane-relief-tab-count", ""+count);
             }
         })
     }
