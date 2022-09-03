@@ -1,10 +1,17 @@
 import { Service, toggleClass } from "@ophidian/core";
 import { around } from "monkey-around";
-import { debounce, WorkspaceLeaf } from "obsidian";
+import { debounce, requireApiVersion, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
 
 declare module "obsidian" {
     interface Workspace {
         requestActiveLeafEvents(): void
+    }
+    interface WorkspaceTabs {
+        scrollIntoView(tab: number): void;
+        tabsContainerEl: HTMLDivElement;
+        isStacked: boolean;
+        currentTab: number;
+        onContainerScroll(): void;
     }
     interface App {
         commands: {
@@ -14,6 +21,8 @@ declare module "obsidian" {
 }
 
 export class Maximizer extends Service {
+
+    changing = false;
 
     onload() {
         this.registerEvent(app.workspace.on("layout-change", () => {
@@ -38,6 +47,14 @@ export class Maximizer extends Service {
                 return old.call(this, leaf, pushHistory, focus);
             }}
         }));
+        this.register(around(WorkspaceTabs.prototype, {
+            onContainerScroll(old) {
+                return function() {
+                    // Don't hide tabs while we're switching modes
+                    if (!self.changing && this.containerEl.isShown()) return old.call(this)
+                }
+            }
+        }))
     }
 
     onunload() {
@@ -69,13 +86,33 @@ export class Maximizer extends Service {
         return parent.find(".workspace-leaf.is-maximized") || app.workspace.getMostRecentLeaf().containerEl;
     }
 
-    fixSlidingPanes = debounce(() => { app.workspace.requestActiveLeafEvents(); }, 5);
+    fixSlidingPanes = debounce(() => {
+        const parent = app.workspace.activeLeaf.parentSplit;
+        if (requireApiVersion("0.6.2") && parent instanceof WorkspaceTabs && parent.isStacked) {
+            parent.containerEl.win.requestAnimationFrame(() => {
+                const remove = around(parent.tabsContainerEl, {
+                    scrollTo(old) { return function(optionsOrX, y?: number) {
+                        if (typeof optionsOrX === "object") {
+                            delete optionsOrX.behavior;
+                            return old.call(this, optionsOrX);
+                        }
+                        return old.call(this, optionsOrX, y);
+                    }}
+                });
+                try { parent.scrollIntoView(parent.currentTab); } finally { remove(); this.changing = false; }
+            });
+        } else {
+            app.workspace.requestActiveLeafEvents();
+            this.changing = false;
+        }
+    }, 1, true);
 
     refresh(
         parent: Element,
         leafEl: Element =
             parent.hasClass("should-maximize") ? this.lastMaximized(parent) : null
     ) {
+        this.changing = true;
         const hadMax = parent.hasClass("has-maximized");
         parent.findAllSelf(".workspace-split, .workspace-tabs").forEach(split => {
             if (split === parent || this.parentFor(split) === parent)
@@ -86,8 +123,9 @@ export class Maximizer extends Service {
         })
         if (!leafEl || !parent.contains(leafEl)) {
             toggleClass(parent, "should-maximize", false);
-            if (hadMax) this.fixSlidingPanes();
+            if (hadMax) return this.fixSlidingPanes();
         }
+        this.changing = false;
     }
 
     parents() {
