@@ -64,6 +64,7 @@ body > .popover.hover-popover .workspace-split.should-maximize
     .workspace-leaf:not(.is-maximized),
     .workspace-tabs:not(.has-maximized),
     .workspace-tabs.has-maximized > .workspace-tab-header-container,
+    .workspace-tabs.has-maximized > .workspace-tab-container > .workspace-tab-header,
     .workspace-split:not(.has-maximized) {
       display: none;
     }
