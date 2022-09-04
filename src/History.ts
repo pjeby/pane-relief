@@ -1,6 +1,7 @@
 import {Notice, TAbstractFile, ViewState, WorkspaceLeaf} from 'obsidian';
 import {around} from "monkey-around";
 import {LayoutStorage, Service, windowEvent} from "@ophidian/core";
+import { leafName } from './pane-relief';
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
@@ -144,7 +145,7 @@ export class History {
 
     goto(pos: number): void {
         if (!this.leaf) return;
-        if (this.leaf.pinned) return new Notice("Pinned pane: unpin before going forward or back"), undefined;
+        if (this.leaf.pinned) return new Notice(`Pinned ${leafName}: unpin before going forward or back`), undefined;
         if (this.leaf.working) return new Notice("Pane is busy: please wait before navigating further"), undefined;
         pos = this.pos = Math.max(0, Math.min(pos, this.stack.length - 1));
         this.stack[pos]?.go(this.leaf);
@@ -158,7 +159,7 @@ export class History {
         if (force || newPos !== this.pos) {
             this.goto(newPos);
         } else {
-            new Notice(`No more ${by < 0 ? "back" : "forward"} history for pane`);
+            new Notice(`No more ${by < 0 ? "back" : "forward"} history for ${leafName}`);
         }
     }
 

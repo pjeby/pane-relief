@@ -48,6 +48,14 @@ declare module "obsidian" {
     }
 }
 
+
+export const leafName = requireApiVersion("0.16") ? "tab" : "pane";
+export const splitName = requireApiVersion("0.16") ? "group" : "split";
+
+function goName(nth: string) { return `Jump to ${nth} ${leafName} in window`; }
+function putName(nth: string) { return  `Place as ${nth} ${leafName} in ${splitName}`; }
+
+
 export default class PaneRelief extends Plugin {
     use = use.plugin(this);
     nav = this.use(Navigation).watch();
@@ -87,24 +95,24 @@ export default class PaneRelief extends Plugin {
         this.use(StyleSettings)
     }
 
-    [command("swap-prev", "Swap pane with previous in split",  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); }
-    [command("swap-next", "Swap pane with next in split",      "Mod+Shift+PageDown")] (){ return this.leafPlacer( 1); }
+    [command("swap-prev", `Swap ${leafName} with previous in ${splitName}`,  "Mod+Shift+PageUp")]   (){ return this.leafPlacer(-1); }
+    [command("swap-next", `Swap ${leafName} with next in ${splitName}`,      "Mod+Shift+PageDown")] (){ return this.leafPlacer( 1); }
 
-    [command("go-prev",  "Cycle to previous workspace pane",   "Mod+PageUp"  )] () { return () => this.gotoNthLeaf(-1, true); }
-    [command("go-next",  "Cycle to next workspace pane",       "Mod+PageDown")] () { return () => this.gotoNthLeaf( 1, true); }
+    [command("go-prev",  `Cycle to previous ${leafName} in this window`,   "Mod+PageUp"  )] () { return () => this.gotoNthLeaf(-1, true); }
+    [command("go-next",  `Cycle to next ${leafName} in this window`,       "Mod+PageDown")] () { return () => this.gotoNthLeaf( 1, true); }
 
     [command("win-prev", "Cycle to previous window", [] )] () { if (numWindows() > 1) return () => this.gotoNthWindow(-1, true); }
     [command("win-next", "Cycle to next window",     [] )] () { if (numWindows() > 1) return () => this.gotoNthWindow( 1, true); }
 
-    [command("go-1st",   "Jump to 1st pane in the workspace",  "Alt+1")] () { return () => this.gotoNthLeaf(0); }
-    [command("go-2nd",   "Jump to 2nd pane in the workspace",  "Alt+2")] () { return () => this.gotoNthLeaf(1); }
-    [command("go-3rd",   "Jump to 3rd pane in the workspace",  "Alt+3")] () { return () => this.gotoNthLeaf(2); }
-    [command("go-4th",   "Jump to 4th pane in the workspace",  "Alt+4")] () { return () => this.gotoNthLeaf(3); }
-    [command("go-5th",   "Jump to 5th pane in the workspace",  "Alt+5")] () { return () => this.gotoNthLeaf(4); }
-    [command("go-6th",   "Jump to 6th pane in the workspace",  "Alt+6")] () { return () => this.gotoNthLeaf(5); }
-    [command("go-7th",   "Jump to 7th pane in the workspace",  "Alt+7")] () { return () => this.gotoNthLeaf(6); }
-    [command("go-8th",   "Jump to 8th pane in the workspace",  "Alt+8")] () { return () => this.gotoNthLeaf(7); }
-    [command("go-last",  "Jump to last pane in the workspace", "Alt+9")] () { return () => this.gotoNthLeaf(99999999); }
+    [command("go-1st",   goName("1st"),  "Alt+1")] () { return () => this.gotoNthLeaf(0); }
+    [command("go-2nd",   goName("2nd"),  "Alt+2")] () { return () => this.gotoNthLeaf(1); }
+    [command("go-3rd",   goName("3rd"),  "Alt+3")] () { return () => this.gotoNthLeaf(2); }
+    [command("go-4th",   goName("4th"),  "Alt+4")] () { return () => this.gotoNthLeaf(3); }
+    [command("go-5th",   goName("5th"),  "Alt+5")] () { return () => this.gotoNthLeaf(4); }
+    [command("go-6th",   goName("6th"),  "Alt+6")] () { return () => this.gotoNthLeaf(5); }
+    [command("go-7th",   goName("7th"),  "Alt+7")] () { return () => this.gotoNthLeaf(6); }
+    [command("go-8th",   goName("8th"),  "Alt+8")] () { return () => this.gotoNthLeaf(7); }
+    [command("go-last",  goName("last"), "Alt+9")] () { return () => this.gotoNthLeaf(99999999); }
 
     [command("win-1st",   "Switch to 1st window",  [])] () { if (numWindows() > 1) return () => this.gotoNthWindow(0); }
     [command("win-2nd",   "Switch to 2nd window",  [])] () { if (numWindows() > 1) return () => this.gotoNthWindow(1); }
@@ -116,21 +124,21 @@ export default class PaneRelief extends Plugin {
     [command("win-8th",   "Switch to 8th window",  [])] () { if (numWindows() > 7) return () => this.gotoNthWindow(7); }
     [command("win-last",  "Switch to last window", [])] () { if (numWindows() > 1) return () => this.gotoNthWindow(99999999); }
 
-    [command("put-1st",  "Place as 1st pane in the split",     "Mod+Alt+1")] () { return () => this.placeLeaf(0, false); }
-    [command("put-2nd",  "Place as 2nd pane in the split",     "Mod+Alt+2")] () { return () => this.placeLeaf(1, false); }
-    [command("put-3rd",  "Place as 3rd pane in the split",     "Mod+Alt+3")] () { return () => this.placeLeaf(2, false); }
-    [command("put-4th",  "Place as 4th pane in the split",     "Mod+Alt+4")] () { return () => this.placeLeaf(3, false); }
-    [command("put-5th",  "Place as 5th pane in the split",     "Mod+Alt+5")] () { return () => this.placeLeaf(4, false); }
-    [command("put-6th",  "Place as 6th pane in the split",     "Mod+Alt+6")] () { return () => this.placeLeaf(5, false); }
-    [command("put-7th",  "Place as 7th pane in the split",     "Mod+Alt+7")] () { return () => this.placeLeaf(6, false); }
-    [command("put-8th",  "Place as 8th pane in the split",     "Mod+Alt+8")] () { return () => this.placeLeaf(7, false); }
-    [command("put-last", "Place as last pane in the split",    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); }
+    [command("put-1st",  putName("1st"),     "Mod+Alt+1")] () { return () => this.placeLeaf(0, false); }
+    [command("put-2nd",  putName("2nd"),     "Mod+Alt+2")] () { return () => this.placeLeaf(1, false); }
+    [command("put-3rd",  putName("3rd"),     "Mod+Alt+3")] () { return () => this.placeLeaf(2, false); }
+    [command("put-4th",  putName("4th"),     "Mod+Alt+4")] () { return () => this.placeLeaf(3, false); }
+    [command("put-5th",  putName("5th"),     "Mod+Alt+5")] () { return () => this.placeLeaf(4, false); }
+    [command("put-6th",  putName("6th"),     "Mod+Alt+6")] () { return () => this.placeLeaf(5, false); }
+    [command("put-7th",  putName("7th"),     "Mod+Alt+7")] () { return () => this.placeLeaf(6, false); }
+    [command("put-8th",  putName("8th"),     "Mod+Alt+8")] () { return () => this.placeLeaf(7, false); }
+    [command("put-last", putName("last"),    "Mod+Alt+9")] () { return () => this.placeLeaf(99999999, false); }
 
-    [command("maximize", "Maximize active pane (Toggle)", [])] () {
+    [command("maximize", `Maximize active ${leafName} (Toggle)`, [])] () {
         if (this.max.parentForLeaf(app.workspace.activeLeaf)) return () => this.max.toggleMaximize();
     }
 
-    [command("ordered-close", "Close pane and go to adjacent pane")] () { return () => {
+    [command("ordered-close", `Close ${leafName} and go to adjacent ${leafName}`)] () { return () => {
         const toClose = app.workspace.activeLeaf, leaves = this.nav.forLeaf(toClose).leaves(), pos = leaves.indexOf(toClose);
         let toSwitch: WorkspaceLeaf;
         if (pos > -1) {
