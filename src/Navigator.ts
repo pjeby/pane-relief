@@ -1,4 +1,4 @@
-import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion} from 'obsidian';
+import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs} from 'obsidian';
 import {domLeaves, History, HistoryEntry} from "./History";
 import {PerWindowComponent} from "@ophidian/core";
 
