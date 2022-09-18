@@ -10,7 +10,7 @@ settings:
 
     -   id: pane-relief-disable-counts
         title: Disable history counts
-        description: Remove the forward/back counts on titlebar
+        description: Remove the forward/back counts on title bars
         type: class-toggle
 
     -   id: pr-sliding-panes-desktop-width
@@ -72,6 +72,10 @@ body > .popover.hover-popover .workspace-split.should-maximize
       flex-basis: calc(100% - 4px); // 4px is for scrollbar width
       .view-header {
         display: flex;
+        body.is-hidden-frameless:not(.is-fullscreen) & {
+          padding-left: var(--frame-left-space);
+          padding-right: var(--frame-right-space);
+        }
         .view-header-icon { display: inherit; }
       } // always show view header when maximized
     }
@@ -158,6 +162,7 @@ body.pane-relief-pane-numbering {
   {
       counter-reset: pane-number var(--pane-relief-label);
       content: counter(pane-number);
+      font-size: var(--font-ui-small, inherit);
   }
 
   /* Number panes in "koncham workspace" plugin's Center Panes view */
@@ -178,6 +183,16 @@ body.pane-relief-pane-numbering {
   { content: " "; }
   .workspace-leaf-content[data-type="center-panes"] .nav-file:nth-child(8) ~ .nav-file:last-child .nav-file-title-content::before
   { content: "9 " !important; }
+}
+
+/* 0.16.3 history counts */
+body:not(.pane-relief-disable-counts) .view-header-nav-buttons {
+  button:first-child::before {
+    content: var(--pane-relief-backward-count) "\00a0"; min-width: 1.5em; text-align: right;
+  }
+  button:last-child::after {
+    content: "\00a0" var(--pane-relief-forward-count); min-width: 1.5em;  text-align: left;
+  }
 }
 
 /* Disable history counts */

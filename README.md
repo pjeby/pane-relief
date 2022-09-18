@@ -18,6 +18,8 @@ The overall goal of these features is to provide a more browser-like Obsidian ex
 
 ### Per-Tab Navigation History
 
+(Note: Obsidian 0.16.3 implements its own per-tab navigation history, and Pane Relief enhances it to match the feature set described below.  Older Obsidian versions have a single global history, and Paen Relief replaces that history with its own implementation that provides these features.  This documentation section will be revised accordingly when Pane Relief drops support for older Obsidian versions.)
+
 Normally, Obsidian keeps a single global history for back/forward navigation commands.  This history includes not just how you navigate within each tab, but also your navigation *between* tabs.  (Which produces counterintuitive results at times, especially if you've pinned any tabs in place, causing *new*, additional panes to be split off when you go "back" or "forward"!)
 
 Pane Relief fixes these problems by giving each tab its own unique back/forward history, just like the tabs in a browser.  Going back or forward affects *only* that tab, and no other.  If a tab is pinned, a notice is displayed telling you to unpin if you want to go forward or back, instead of opening a new tab.  (Messages are also displayed if you try to go further "back" or "forward" than existing history for the tab.)
@@ -32,6 +34,7 @@ The pages shown in the list can be:
 - Dragged from the menu and dropped elsewhere to create a link or move the file
 - Clicked to navigate to that position in history (without losing your place),
 - Ctrl/Cmd clicked to open a new tab *with duplicated history* at that point in the navigation (similar to doing the same thing in Chrome or Firefox)
+    - On Obsidian 0.16.3+, you can also use standard Obsidian modifier keys to open the new tab in a new pane or window)
 - Right-clicked to open a file context menu to perform actions directly on the file
 
 Last, but far from least, Pane Relief saves each tab's history not only across Obsidian restarts, but *also* saves and loads the history along with workspace layouts, so if you're using the Obsidian workspaces plugin, your navigation history will not get confused by switching between workspaces.  (And it even works with Obsidian 0.15.3+'s multiple desktop windows feature.)

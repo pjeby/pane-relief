@@ -8,11 +8,18 @@ specifiers:
 
 devDependencies:
   '@ophidian/build': 1.0.1
-  '@ophidian/core': github.com/ophidian-lib/core/bc760d39ef2fa194f6c249c34ece9d68aabc4936
+  '@ophidian/core': github.com/ophidian-lib/core/74a78e973a3c5594ba5f9f38209e8334f59dc71b
   monkey-around: 2.3.0
   obsidian: 0.15.4
 
 packages:
+
+  /@babel/runtime/7.19.0:
+    resolution: {integrity: sha512-eR8Lo9hnDS7tqkO7NsV+mKvCmv5boaXFSZ70DnfhcgiEne8hv9oCEd36Klw74EtizEqLsy4YnW8UWwpBVolHZA==}
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      regenerator-runtime: 0.13.9
+    dev: true
 
   /@nodelib/fs.scandir/2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -553,6 +560,12 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
+  /i18next/20.6.1:
+    resolution: {integrity: sha512-yCMYTMEJ9ihCwEQQ3phLo7I/Pwycf8uAx+sRHwwk5U9Aui/IZYgQRyMqXafQOw5QQ7DM1Z+WyEXWIqSuJHhG2A==}
+    dependencies:
+      '@babel/runtime': 7.19.0
+    dev: true
+
   /iferr/0.1.5:
     resolution: {integrity: sha512-DUNFN5j7Tln0D+TxzloUjKB+CtVu6myn0JEFak6dG18mNt9YkQ6lzGCdafwofISZ1lLF3xRHJ98VKy9ynkcFaA==}
     dev: true
@@ -745,6 +758,10 @@ packages:
       picomatch: 2.3.1
     dev: true
 
+  /regenerator-runtime/0.13.9:
+    resolution: {integrity: sha512-p3VT+cOEgxFsRRA9X4lkI1E+k2/CtnKtU4gcxyaCUreilL/vqI6CdZ3wxVUx3UOUg+gnUOQQcRI7BmSI656MYA==}
+    dev: true
+
   /reusify/1.0.4:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
@@ -836,11 +853,12 @@ packages:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
     dev: true
 
-  github.com/ophidian-lib/core/bc760d39ef2fa194f6c249c34ece9d68aabc4936:
-    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/bc760d39ef2fa194f6c249c34ece9d68aabc4936}
+  github.com/ophidian-lib/core/74a78e973a3c5594ba5f9f38209e8334f59dc71b:
+    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/74a78e973a3c5594ba5f9f38209e8334f59dc71b}
     name: '@ophidian/core'
     version: 0.0.12
     dependencies:
+      i18next: 20.6.1
       monkey-around: 2.3.0
       obsidian: 0.15.4
       to-use: 0.2.1

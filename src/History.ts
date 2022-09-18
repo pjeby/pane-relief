@@ -1,10 +1,12 @@
-import {Notice, TAbstractFile, ViewState, WorkspaceLeaf} from 'obsidian';
+import {HistoryState, Notice, requireApiVersion, TAbstractFile, WorkspaceLeaf} from 'obsidian';
 import {around} from "monkey-around";
 import {LayoutStorage, Service, windowEvent} from "@ophidian/core";
 import { leafName } from './pane-relief';
+import { formatState } from './Navigator';
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
+export const hasTabHistory = requireApiVersion("0.16.3");
 
 declare module "obsidian" {
     interface Workspace {
@@ -13,9 +15,27 @@ declare module "obsidian" {
 
     interface WorkspaceLeaf {
         [HIST_ATTR]: History
+        history?: LeafHistory
         pinned: boolean
         working: boolean
         serialize(): any
+    }
+
+    interface SerializedHistory {
+        backHistory: HistoryState[]
+        forwardHistory: HistoryState[]
+    }
+
+    interface LeafHistory extends SerializedHistory {
+        go(offset: number): Promise<void>;
+        deserialize(state: SerializedHistory): void;
+    }
+
+    interface HistoryState {
+        title: string,
+        icon: string,
+        state: ViewState
+        eState: any
     }
 
     interface ViewState {
@@ -29,6 +49,8 @@ export const domLeaves = new WeakMap();
 interface PushState {
     state: string
     eState: string
+    title: string
+    icon: string
 }
 
 export class HistoryEntry {
@@ -41,6 +63,22 @@ export class HistoryEntry {
         this.setState(rawState);
     }
 
+    static fromNative(state: HistoryState) {
+        return new this({...state,
+            state:  JSON.stringify(state.state),
+            eState: JSON.stringify(state.eState),
+        });
+    }
+
+    get asNative() {
+        const state = {...this.raw, state: this.viewState, eState: this.eState};
+        if (!state.title || !state.icon) {
+            const info = formatState(this);
+            state.title ||= (info.title || "");
+            state.icon  ||= (info.icon  || "");
+        }
+        return state;
+    }
 
     get viewState() {
         return JSON.parse(this.raw.state || "{}")
@@ -106,22 +144,59 @@ export class History {
 
     static forLeaf(leaf: WorkspaceLeaf) {
         if (leaf) domLeaves.set(leaf.containerEl, leaf);
-        if (leaf) return leaf[HIST_ATTR] instanceof this ?
-            leaf[HIST_ATTR] :
-            leaf[HIST_ATTR] = new this(leaf, (leaf[HIST_ATTR]as any)?.serialize() || undefined);
+        if (leaf) {
+            const old = leaf[HIST_ATTR] as any;
+            // Already cached?  Return it
+            if (old instanceof this) return old;
+            if (old && !old.hadTabs) {
+                // Try to re-use previous plugin version's state if it wasn't on 0.16.3+
+                // This will let people who upgrade to 0.16.3 keep their previous history
+                // if they don't update Pane Relief ahead of time
+                const oldState: SerializableHistory = old?.serialize() || undefined;
+                return new this(leaf, oldState).saveToNative();
+            }
+            // Either a new install or an update/reload on 0.16.3, get the current state
+            return new this(leaf).loadFromNative();
+        }
     }
 
     pos: number
     stack: HistoryEntry[]
+    hadTabs = hasTabHistory;
 
     constructor(public leaf?: WorkspaceLeaf, {pos, stack}: SerializableHistory = {pos:0, stack:[]}) {
+        if (leaf) leaf[HIST_ATTR] = this;   // prevent recursive lookups
         this.leaf = leaf;
         this.pos = pos;
         this.stack = stack.map(raw => new HistoryEntry(raw));
     }
 
+    saveToNative(): this {
+        const nativeHistory = this.leaf?.history;
+        if (!nativeHistory || !hasTabHistory) return this;
+        const stack = this.stack.map(entry => entry.asNative);
+        nativeHistory.deserialize({
+            backHistory: stack.slice(this.pos+1).reverse(),
+            forwardHistory: stack.slice(0, this.pos),
+        })
+        return this;
+    }
+
+    loadFromNative(): this {
+        const history = this.leaf?.history;
+        if (!history || !hasTabHistory) return this;
+        const stack: typeof history.backHistory = [].concat(
+            history.forwardHistory.slice().filter(s => s),
+            {state: {}, eState: {}},
+            history.backHistory.slice().filter(s => s).reverse()
+        );
+        this.stack = stack.map(e => HistoryEntry.fromNative(e));
+        this.pos = history.forwardHistory.length;
+        return this;
+    }
+
     cloneTo(leaf: WorkspaceLeaf) {
-        return leaf[HIST_ATTR] = new History(leaf, this.serialize());
+        return new History(leaf, this.serialize()).saveToNative();
     }
 
     onRename(file: TAbstractFile, oldPath: string) {
@@ -157,7 +232,10 @@ export class History {
         // prevent wraparound
         const newPos = Math.max(0, Math.min(this.pos - by, this.stack.length - 1));
         if (force || newPos !== this.pos) {
-            this.goto(newPos);
+            if (this.leaf.history && hasTabHistory) {
+                this.pos = newPos;
+                this.leaf.history.go(by);
+            } else this.goto(newPos);
         } else {
             new Notice(`No more ${by < 0 ? "back" : "forward"} history for ${leafName}`);
         }
@@ -198,9 +276,29 @@ export class HistoryManager extends Service {
 
         this.registerEvent(store.onLoadItem((item, state) => {
             if (item instanceof WorkspaceLeaf && state[SERIAL_PROP]) {
-                item[HIST_ATTR] = new History(item, state[SERIAL_PROP]);
+                new History(item, state[SERIAL_PROP]).saveToNative();
             }
         }));
+
+        if (hasTabHistory) {
+            // Forward native tab history events to our own implementation
+            this.register(around(WorkspaceLeaf.prototype, {
+                trigger(old) { return function trigger(name, ...data) {
+                    if (name === "history-change") {
+                        const history = History.forLeaf(this)
+                        history.loadFromNative();
+                        app.workspace.trigger("pane-relief:update-history", this, history);
+                    }
+                    return old.call(this, name, ...data);
+                }; }
+            }));
+
+            // Incorporate any prior history state (e.g. on plugin update)
+            if (app.workspace.layoutReady) app.workspace.iterateAllLeaves(leaf => { History.forLeaf(leaf); })
+
+            // Skip most actual history replacement if native history is tab-based
+            return;
+        }
 
         // Monkeypatch: check for popstate events (to suppress them)
         this.register(around(WorkspaceLeaf.prototype, {

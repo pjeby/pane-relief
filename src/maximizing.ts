@@ -88,7 +88,7 @@ export class Maximizer extends Service {
 
     fixSlidingPanes = debounce(() => {
         const parent = app.workspace.activeLeaf.parentSplit;
-        if (requireApiVersion("0.6.2") && parent instanceof WorkspaceTabs && parent.isStacked) {
+        if (requireApiVersion("0.16.2") && parent instanceof WorkspaceTabs && parent.isStacked) {
             parent.containerEl.win.requestAnimationFrame(() => {
                 const remove = around(parent.tabsContainerEl, {
                     scrollTo(old) { return function(optionsOrX, y?: number) {

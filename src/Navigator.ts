@@ -1,6 +1,7 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs} from 'obsidian';
-import {domLeaves, History, HistoryEntry} from "./History";
+import {domLeaves, hasTabHistory, History, HistoryEntry} from "./History";
 import {PerWindowComponent} from "@ophidian/core";
+import {around} from 'monkey-around';
 
 declare global {
     interface Window {
@@ -26,6 +27,10 @@ declare module "obsidian" {
     interface DragData {}
     interface WorkspaceLeaf {
         activeTime: number
+        tabHeaderEl?: HTMLDivElement
+    }
+    interface Workspace {
+        duplicateLeaf(leaf: WorkspaceLeaf, kind: boolean|"window"|"pane"|"tab"): Promise<WorkspaceLeaf>
     }
 }
 
@@ -113,19 +118,24 @@ export class Navigation extends PerWindowComponent {
         const {document} = this.win;
         if (requireApiVersion("0.16.0")) document.body.addClass("obsidian-themepocalypse");
 
-        document.addEventListener("mouseup", historyHandler, true);
-        document.addEventListener("mousedown", historyHandler, true);
+        this.win.addEventListener("pointerup", historyHandler, true);
+        this.win.addEventListener("pointerdown", historyHandler, true);
         this.register(() => {
-            document.removeEventListener("mouseup", historyHandler, true);
-            document.removeEventListener("mousedown", historyHandler, true);
+            this.win.removeEventListener("pointerup", historyHandler, true);
+            this.win.removeEventListener("pointerdown", historyHandler, true);
         });
+
+        const self = this;
         function historyHandler(e: MouseEvent) {
             if (e.button !== 3 && e.button !== 4) return;
-            e.preventDefault(); e.stopPropagation();  // prevent default behavior
-            const target = (e.target as HTMLElement).matchParent(".workspace-leaf");
-            if (target && e.type === "mouseup") {
+            e.preventDefault(); e.stopImmediatePropagation();  // prevent default behavior
+            const target = (e.target as HTMLElement).matchParent(".workspace-leaf, .workspace-tab-header");
+            if (target && e.type === "pointerup") {
                 let leaf = domLeaves.get(target);
-                if (!leaf) app.workspace.iterateAllLeaves(l => leaf = (l.containerEl === target) ? l : leaf);
+                if (!leaf) app.workspace.iterateLeaves(
+                    l => leaf = (l.containerEl === target || l.tabHeaderEl === target) ? l : leaf,
+                    self.container
+                );
                 if (!leaf) return false;
                 if (e.button == 3) { History.forLeaf(leaf).back(); }
                 if (e.button == 4) { History.forLeaf(leaf).forward(); }
@@ -173,6 +183,15 @@ export class Navigation extends PerWindowComponent {
         const back = actions?.find('.view-action[class*=" app:go-back"]');
         if (fwd) this.forward.updateDisplay(history, fwd);
         if (back) this.back.updateDisplay(history, back);
+
+        // Add labels for 0.16.3 Tab headers
+        if (hasTabHistory) {
+            const actions = leaf.containerEl.find(".view-header > .view-header-nav-buttons");
+            const fwd = actions?.find('button:last-child');
+            const back = actions?.find('button:first-child');
+            if (fwd) this.forward.updateDisplay(history, fwd);
+            if (back) this.back.updateDisplay(history, back);
+        }
     }
 
     numberPanes() {
@@ -228,7 +247,8 @@ export class Navigator extends Component {
         ) || this.owner.win.createDiv();
         this.count = this.containerEl.createSpan({prepend: this.kind === "back", cls: "history-counter"});
         this.history = null;
-        this.oldLabel = this.containerEl.getAttribute("aria-label");
+        this.oldLabel = this.containerEl.getAttribute("aria-label") ||
+            i18next.t(this.dir < 0 ? "commands.navigate-back" : "commands.navigate-forward");
         this.registerDomEvent(this.containerEl, "contextmenu", this.openMenu.bind(this));
         const onClick = (e: MouseEvent) => {
             // Don't allow Obsidian to switch window or forward the event
@@ -239,11 +259,13 @@ export class Navigator extends Component {
         this.register(() => this.containerEl.removeEventListener("click", onClick, true));
         this.containerEl.addEventListener("click", onClick, true);
         this.register(
-            // Support "Customizable Page Header and Title Bar" buttons
+            // Support "Customizable Page Header and Title Bar" buttons (0.15+)
+            // and built-in per-tab history (0.16.3+)
             onElement(
                 this.owner.win.document.body,
                 "contextmenu",
-                `.view-header > .view-actions > .view-action[class*="app:go-${this.kind}"]`,
+                `.view-header > .view-actions > .view-action[class*="app:go-${this.kind}"],
+                 .view-header > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child`,
                 (evt, target) => {
                     const el = target.matchParent(".workspace-leaf");
                     const leaf = this.owner.leaves().filter(leaf => leaf.containerEl === el).pop();
@@ -272,7 +294,7 @@ export class Navigator extends Component {
         const states = history[this.dir < 0 ? "lookBehind" : "lookAhead"]();
         if (el===this.containerEl) this.setCount(states.length);
         setTooltip(el, states.length ?
-            this.oldLabel + "\n" + this.formatState(states[0]).title :
+            this.oldLabel + "\n" + formatState(states[0]).title :
             `No ${this.kind} history`
         );
         el.toggleClass("mod-active", states.length > 0);
@@ -285,10 +307,17 @@ export class Navigator extends Component {
         menu.setUseNativeMenu?.(false);  // 0.16: force HTML menu
         menu.dom.addClass("pane-relief-history-menu");
         menu.dom.on("mousedown", ".menu-item", e => {e.stopPropagation();}, true);
-        states.map(this.formatState.bind(this)).forEach(
+        states.map(formatState).forEach(
             (info: FileInfo, idx) => this.menuItem(info, idx, menu, history)
         );
         menu.showAtPosition({x: evt.clientX, y: evt.clientY + 20});
+        menu.register(around(app.workspace, {setActiveLeaf(old) {
+            // Don't allow a hover editor to auto-focus, so you can mod-click without targeting it
+            return function(leaf, pushHistory, focus) {
+                if (leaf.containerEl.matchParent(".hover-editor")) return;
+                return old.call(this, leaf, pushHistory, focus);
+            }
+        }}));
         this.owner.historyIsOpen = true;
         menu.onHide(() => { this.owner.historyIsOpen = false; this.owner.display(); });
     }
@@ -302,7 +331,15 @@ export class Navigator extends Component {
             i.setIcon(info.icon).setTitle(prefix + info.title).onClick(e => {
                 // Check for ctrl/cmd/middle button and split leaf + copy history
                 if (Keymap.isModEvent(e)) {
-                    history = history.cloneTo(app.workspace.splitActiveLeaf());
+                    if (hasTabHistory && history.leaf) {
+                        // Use the new duplication API because native history doesn't store current state
+                        app.workspace.duplicateLeaf(history.leaf, Keymap.isModEvent(e)).then(leaf => {
+                            History.forLeaf(leaf).go((idx+1) * dir, true);
+                        });
+                        return;
+                    } else {
+                        history = history.cloneTo(app.workspace.getLeaf(Keymap.isModEvent(e)));
+                    }
                 }
                 history.go((idx+1) * dir, true);
             });
@@ -338,27 +375,28 @@ export class Navigator extends Component {
             }, true);
         }
     }
-
-    formatState(entry: HistoryEntry): FileInfo {
-        const {viewState: {type, state}, eState, path} = entry;
-        const file = path && app.vault.getAbstractFileByPath(path) as TFile;
-        const info = {icon: "", title: "", file, type, state, eState};
-
-        if (nonFileViews[type]) {
-            [info.icon, info.title] = nonFileViews[type];
-        } else if (path && !file) {
-            [info.icon, info.title] = ["trash", "Missing file "+path];
-        } else if (file instanceof TFile) {
-            info.icon = viewtypeIcons[type] ?? "document";
-            if (type === "markdown" && state.mode === "preview") info.icon = "lines-of-text";
-            info.title = file ? file.basename + (file.extension !== "md" ? "."+file.extension : "") : "No file";
-            if (type === "media-view" && !file) info.title = state.info?.filename ?? info.title;
-        }
-
-        app.workspace.trigger("pane-relief:format-history-item", info);
-        return info;
-    }
 }
+
+export function formatState(entry: HistoryEntry): FileInfo {
+    const {viewState: {type, state}, eState, path} = entry;
+    const file = path && app.vault.getAbstractFileByPath(path) as TFile;
+    const info = {icon: "", title: "", file, type, state, eState};
+
+    if (nonFileViews[type]) {
+        [info.icon, info.title] = nonFileViews[type];
+    } else if (path && !file) {
+        [info.icon, info.title] = ["trash", "Missing file "+path];
+    } else if (file instanceof TFile) {
+        info.icon = viewtypeIcons[type] ?? "document";
+        if (type === "markdown" && state.mode === "preview") info.icon = "lines-of-text";
+        info.title = file ? file.basename + (file.extension !== "md" ? "."+file.extension : "") : "No file";
+        if (type === "media-view" && !file) info.title = state.info?.filename ?? info.title;
+    }
+
+    app.workspace.trigger("pane-relief:format-history-item", info);
+    return info;
+}
+
 
 export function onElement<K extends keyof HTMLElementEventMap>(
     el: HTMLElement,
