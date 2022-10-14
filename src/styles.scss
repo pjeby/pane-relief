@@ -68,6 +68,11 @@ body > .popover.hover-popover .workspace-split.should-maximize
     .workspace-split:not(.has-maximized) {
       display: none;
     }
+    .workspace-tabs.mod-stacked .workspace-leaf.is-maximized {
+      // Override Obsidian tab positioning
+      max-width: unset !important;
+      left: unset !important;
+    }
     .workspace-leaf.is-maximized {
       flex-basis: calc(100% - 4px); // 4px is for scrollbar width
       .view-header {
