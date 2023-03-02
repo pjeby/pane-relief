@@ -18,7 +18,7 @@ The overall goal of these features is to provide a more browser-like Obsidian ex
 
 ### Per-Tab Navigation History
 
-(Note: Obsidian 0.16.3 implements its own per-tab navigation history, and Pane Relief enhances it to match the feature set described below.  Older Obsidian versions have a single global history, and Paen Relief replaces that history with its own implementation that provides these features.  This documentation section will be revised accordingly when Pane Relief drops support for older Obsidian versions.)
+(Note: Obsidian 0.16.3 implements its own per-tab navigation history, and Pane Relief enhances it to match the feature set described below.  Older Obsidian versions have a single global history, and Pane Relief replaces that history with its own implementation that provides these features.  This documentation section will be revised accordingly when Pane Relief drops support for older Obsidian versions.)
 
 Normally, Obsidian keeps a single global history for back/forward navigation commands.  This history includes not just how you navigate within each tab, but also your navigation *between* tabs.  (Which produces counterintuitive results at times, especially if you've pinned any tabs in place, causing *new*, additional panes to be split off when you go "back" or "forward"!)
 
