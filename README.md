@@ -1,43 +1,37 @@
-## Pane Relief: Per-Tab History and Pane Management for Obsidian
+## Pane Relief: Tab History Enhancements and Pane Management for Obsidian
 
-> Note: this documentation uses the new Obsidan 0.16 terminology of "tabs" and "panes" replacing "panes" and "splits".  If you're not using Obsidian 0.16 yet, [please use the older documentation](https://github.com/pjeby/pane-relief/blob/0.3.3/README.md).
+> Note: this documentation uses the new Obsidan 1.0 terminology of "tabs" and "groups" replacing "panes" and "splits".  If you're not using Obsidian 1.0 yet, [please use the older documentation](https://github.com/pjeby/pane-relief/blob/0.3.3/README.md).
 
 This plugin helps relieve the "pane" of managing lots of panes and tabs in [Obsidian.md](https://obsidian.md) (especially when using the keyboard), by providing features such as:
 
-- Browser-like per-tab navigation history (complete with forward/back lists)
-- Commands to move between tabs or windows, move tabs around, jump to the Nth tab, etc.
+- Enhanced, persistent per-tab navigation history
+- Commands to move between tabs or windows, move tabs around, etc.
 - An intelligent [tab maximizing command](#maximize-active-tab)
-- Optional [per-tab navigation buttons](#per-pane-navigation-buttons) and [numbering](#tab-numbering)
-- [Focus lock](#focus-lock) for Obsidian 0.15.6+, to stop sidebar panes stealing focus
+- [Focus lock](#focus-lock), to stop sidebar panes stealing focus
 - A browser-style "close" command that activates an adjacent tab instead of the most-recently used one
-- A [Simple Sliding Panes mode](#simple-sliding-panes-mode) that can be toggled per-window and is compatible with Obsidian 0.16.2 and its new stacked tabs (NEW in 0.3.1)
+- A [Simple Sliding Panes mode](#simple-sliding-panes-mode) that can be toggled per-window and is compatible with Obsidian 1.0 stacked tabs (NEW in 0.3.1)
 
 The overall goal of these features is to provide a more browser-like Obsidian experience for users that like using lots of tabs, panes, windows, and/or Hover Editors.
 
 (Note: this plugin adds a lot of preconfigured hotkeys.  You may want to install the [Hotkey Helper](https://obsidian.md/plugins?id=hotkey-helper) plugin first, so you can easily see and resolve any conflicts, update the keys to better suit your preferences, and assign hotkeys for the commands that don't have a default.)
 
-### Per-Tab Navigation History
+### Per-Tab History Enhancements
 
-(Note: Obsidian 0.16.3 implements its own per-tab navigation history, and Pane Relief enhances it to match the feature set described below.  Older Obsidian versions have a single global history, and Paen Relief replaces that history with its own implementation that provides these features.  This documentation section will be revised accordingly when Pane Relief drops support for older Obsidian versions.)
+Pane Relief adds several enhancements to Obsidian 1.0's built-in history:
 
-Normally, Obsidian keeps a single global history for back/forward navigation commands.  This history includes not just how you navigate within each tab, but also your navigation *between* tabs.  (Which produces counterintuitive results at times, especially if you've pinned any tabs in place, causing *new*, additional panes to be split off when you go "back" or "forward"!)
+- History is saved across restarts for all tabs in all windows (and is also saved with any workspaces you're using with the Workspaces plugin)
+- History arrows in the tab title bar show counts of how many items are in the forward or back history
+- History arrows, when hovered, show what you'd be navigating forward or back *to*
+- You can use the fourth and fifth mouse buttons ("back" and "forward") to click on any tab and navigate that specific tab forward or back (Obsidian by default navigates the currently-active tab, not the tab you click on.)
 
-Pane Relief fixes these problems by giving each tab its own unique back/forward history, just like the tabs in a browser.  Going back or forward affects *only* that tab, and no other.  If a tab is pinned, a notice is displayed telling you to unpin if you want to go forward or back, instead of opening a new tab.  (Messages are also displayed if you try to go further "back" or "forward" than existing history for the tab.)
-
-In addition, Pane Relief captures the fourth and fifth mouse buttons ("back" and "forward") and applies the navigation to the tab (if any) where the mouse was pointing when those buttons were clicked.
-
-Plus, Pane Relief augments the Obsidian forward/back buttons found in the titlebar, giving them counts to show how far "back" or "forward" you can go in the current pane.  And, as in a normal browser, you can right-click those arrows to show a list of pages you can click to directly navigate to, without losing your history position.
-
-The pages shown in the list can be:
+Right-clicking the navigation arrows also gives you a list of pages to go forward or back to, that can be:
 
 - Previewed for quick reference (by holding Ctrl or Cmd while hovering),
 - Dragged from the menu and dropped elsewhere to create a link or move the file
 - Clicked to navigate to that position in history (without losing your place),
 - Ctrl/Cmd clicked to open a new tab *with duplicated history* at that point in the navigation (similar to doing the same thing in Chrome or Firefox)
-    - On Obsidian 0.16.3+, you can also use standard Obsidian modifier keys to open the new tab in a new pane or window)
+    - (You can also use standard Obsidian modifier keys to open the new tab in a new group (Ctrl/Cmd+Alt) or window (Ctrl/Cmd+Alt+Shift)
 - Right-clicked to open a file context menu to perform actions directly on the file
-
-Last, but far from least, Pane Relief saves each tab's history not only across Obsidian restarts, but *also* saves and loads the history along with workspace layouts, so if you're using the Obsidian workspaces plugin, your navigation history will not get confused by switching between workspaces.  (And it even works with Obsidian 0.15.3+'s multiple desktop windows feature.)
 
 ### Tab Access and Movement Commands
 
@@ -71,7 +65,7 @@ The toggle's current state is saved with your workspace, so it persists across O
 
 To install the plugin, open [Pane Relief](https://obsidian.md/plugins?id=pane-relief) in Obsidian's Community Plugins browser, then select "Install" and "Enable".
 
-Once enabled, Pane Relief will take over managing history, but will not use or erase Obsidian's builtin history.  Disabling Pane Relief will re-enable the builtin history, but then Pane Relief's own history may be lost if you don't re-enable the plugin before you exit or load a new workspace.  (This is because Pane Relief has to be enabled in order for it to save or load the history when a workspace is saved or loaded.)
+Pane Relief must be enabled to handle saving and restoring history, or workspace settings like whether focus lock or sliding panes are enabled.  So disabling it may lose stored history or these settings, if you don't re-enable the plugin before you exit or load a new workspace.  (Note: if you are using a hack to delay plugins loading at Obsidian start, you *must* ensure that Pane Relief loads *before* the workspace, or it will not be able to load its settings.)
 
 If you encounter any problems with the plugin, please file bug reports to this repository rather than using the Obsidian forums: I don't check the forums every day (or even every week!) but I do receive email notices from Github and will get back to you much faster than I will see forum comments.
 
@@ -79,7 +73,7 @@ If you encounter any problems with the plugin, please file bug reports to this r
 
 ### Style Settings
 
-Two commonly requested style features are 1) disabling history counts in the titlebar, and 2) adding numbers to panes.  These options are now available via the [Style Settings plugin](https://obsidian.md/plugins?id=obsidian-style-settings) -- just install it and go to its settings: there will be toggles for "Disable history counts" and "Number panes".
+Two commonly requested style features are 1) disabling history counts on the titlebar arrows, and 2) adding numbers to panes.  These options are now available via the [Style Settings plugin](https://obsidian.md/plugins?id=obsidian-style-settings) -- just install it and go to its settings: there will be toggles for "Disable history counts" and "Number panes".
 
 ### Centralized Tab Lists
 
@@ -127,12 +121,3 @@ But for custom theming and CSS snippets that may want to show pane shortcut posi
 }
 ```
 
-### Known Issues/Current Limitations
-
-#### Linked Panes
-
-The history management doesn't have any special handling for linked panes, and so may produce counterintuitive results.  For example, going "back" in one pane may cause linked panes to treat that movement as if it were "forward", in the sense of adding the back target as a new history entry.  This may or may not be better than what Obsidian's built-in history does, but I'm open to feedback or suggestions for better ways to handle things.  (Especially if they can actually be implemented, technically speaking.)
-
-#### Renames and Deletes
-
-If you rename or delete a note that's in the history for a pane, then going backward or forward to that point may not find the file, and will give you a "No file open" message instead.
