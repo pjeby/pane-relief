@@ -112,6 +112,12 @@ body.is-mobile {
       padding-right: calc(var(--ribbon-width) + var(--frame-right-space));
     }
   }
+
+  /* Allow enough space at top of right sidebar for right ribbon toggle to function */
+  .workspace.is-right-sidedock-open & + .mod-right-split .workspace-tabs.mod-top .workspace-tab-header-container::after {
+    width: calc(var(--ribbon-width) + var(--frame-right-space));
+  }
+
   div.sidebar-toggle-button.mod-right {
     position: fixed;
     top: 0;
