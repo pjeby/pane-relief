@@ -1,5 +1,6 @@
 import { use, addCommands, command, LayoutSetting, PerWindowComponent, WindowManager, LayoutItem, toggleClass, allWindows, PWCFactory } from "@ophidian/core";
-import { Plugin, WorkspaceLeaf, WorkspaceRoot, WorkspaceWindow } from "obsidian";
+import { around } from "monkey-around";
+import { Plugin, WorkspaceLeaf, WorkspaceRoot, WorkspaceWindow, debounce } from "obsidian";
 
 type SlideSettings = {
     active: boolean;
@@ -31,6 +32,12 @@ export class SlidingPanes extends PerWindowComponent {
 
     update(active: boolean) {
         toggleClass(this.container.containerEl, "is-sliding", active);
+        const parent = this.container.containerEl.matchParent(".workspace");
+        if (parent) {
+            toggleClass(parent, "is-sliding", active);
+        } else {
+            this.register(this.container.containerEl.onNodeInserted(() => this.update(this.options.active), true));
+        }
     }
 
     activate(leaf: WorkspaceLeaf) {
@@ -61,6 +68,24 @@ declare module "obsidian" {
 class SlidingPanesManager<T extends SlidingPanes> extends WindowManager<T> {
     options = new LayoutSetting(this, "pane-relief:sliding-panes", {active: false} as SlideSettings);
 
+    // Due to a quirk of how electron handles titlebar draggability (and rendering of
+    // out-of-view scrolled panes), we need to overlay parts of the title bar to
+    // ensure they're handled correctly
+    overlay = app.workspace.containerEl.parentElement.createDiv("prsp-tb-overlay");
+
+    requestOverlayUpdate = debounce(() => {
+        if (!app.workspace.leftSplit.collapsed) {
+            const r = app.workspace.leftSplit.containerEl.find(".workspace-tabs.mod-top-left-space .workspace-tab-header-spacer").getBoundingClientRect();
+            this.overlay.style.setProperty("--pr-overlay-width", `${r.width}px`);
+            this.overlay.style.setProperty("--pr-overlay-left", `${r.left}px`);
+        }
+    }, 100, true);
+
+    onunload(): void {
+        super.onunload();
+        this.overlay.detach();
+    }
+
     onload() {
         super.onload();
         window.CodeMirror.getMode({}, "XXX"); // force modes to load, prevents weird sliding
@@ -73,6 +98,15 @@ class SlidingPanesManager<T extends SlidingPanes> extends WindowManager<T> {
         this.registerEvent(this.options.onSet(this.onChange, this));
         this.registerEvent(this.options.store.onLoadItem(this.onChange, this));
         this.registerEvent(this.onLeafChange(leaf => this.forLeaf(leaf).activate(leaf)));
+        app.workspace.onLayoutReady(() => {
+            this.registerEvent(app.workspace.on("layout-change", this.requestOverlayUpdate));
+            this.registerEvent(app.workspace.on("resize", this.requestOverlayUpdate));
+            const mgr = this;
+            this.register(around(app.workspace.leftSplit.constructor.prototype, {
+                expand(old) { return function() { mgr.requestOverlayUpdate(); return old.call(this); }; }
+            }));
+            this.requestOverlayUpdate();
+        });
     }
 
     onChange(item: LayoutItem) {

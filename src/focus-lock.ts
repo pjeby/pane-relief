@@ -111,7 +111,7 @@ export class FocusLock extends Service {
 
 }
 
-function isMain(leaf: WorkspaceLeaf) {
+export function isMain(leaf: WorkspaceLeaf) {
     const root = leaf?.getRoot();
     return !!(root && root !== app.workspace.leftSplit && root !== app.workspace.rightSplit);
 }

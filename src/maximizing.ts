@@ -1,10 +1,12 @@
 import { Service, toggleClass } from "@ophidian/core";
 import { around } from "monkey-around";
 import { debounce, requireApiVersion, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
+import { isMain } from "./focus-lock";
 
 declare module "obsidian" {
     interface Workspace {
         requestActiveLeafEvents(): void
+        rightSidebarToggleButtonEl: HTMLDivElement
     }
     interface WorkspaceTabs {
         scrollIntoView(tab: number): void;
@@ -43,7 +45,7 @@ export class Maximizer extends Service {
                     // Switching from maximized popover to non-popover; de-maximize it first
                     app.commands.executeCommandById("obsidian-hover-editor:restore-active-popover");
                 }
-                if (parent) self.refresh(parent, parent.hasClass("should-maximize") ? leaf.containerEl : null);
+                if (isMain(leaf) && parent) self.refresh(parent, parent.hasClass("should-maximize") ? leaf.containerEl : null);
                 return old.call(this, leaf, pushHistory, focus);
             }}
         }));
@@ -55,6 +57,30 @@ export class Maximizer extends Service {
                 }
             }
         }))
+
+        // Replace the right sidebar toggle that gets hidden during maximize
+        app.workspace.onLayoutReady(() => {
+            const toggle = app.workspace.rightSidebarToggleButtonEl.cloneNode(true) as HTMLDivElement;
+            toggle.id = "pr-maximize-sb-toggle";
+            toggle.addEventListener("click", () => app.workspace.rightSplit.toggle());
+            toggle.ariaLabel = i18next.t(app.workspace.rightSplit.collapsed ? "interface.sidebar-expand" : "interface.sidebar-collapse")
+            app.workspace.containerEl.parentElement.appendChild(toggle);
+            this.register(() => toggle.detach());
+            this.register(around(app.workspace.rightSplit.constructor.prototype, {
+                expand(old) {
+                    return function() {
+                        toggle.ariaLabel = i18next.t("interface.sidebar-collapse");
+                        return old.call(this);
+                    };
+                },
+                collapse(old) {
+                    return function() {
+                        toggle.ariaLabel = i18next.t("interface.sidebar-expand");
+                        return old.call(this);
+                    };
+                }
+            }));
+        })
     }
 
     onunload() {
@@ -63,6 +89,7 @@ export class Maximizer extends Service {
     }
 
     toggleMaximize(leaf = app.workspace.activeLeaf) {
+        if (!leaf || !isMain(leaf)) leaf = app.workspace.getMostRecentLeaf(app.workspace.rootSplit);
         const parent = this.parentForLeaf(leaf);
         if (!parent) return;
         const popoverEl = parent.matchParent(".hover-popover");
@@ -135,7 +162,7 @@ export class Maximizer extends Service {
         if (popovers) for (const popover of popovers) {
             if (popover.rootSplit) parents.push(popover.rootSplit.containerEl)
         }
-        return parents;
+        return parents.map(e => this.parentFor(e));
     }
 
     parentForLeaf(leaf: WorkspaceLeaf) {
@@ -143,7 +170,7 @@ export class Maximizer extends Service {
     }
 
     parentFor(el: Element) {
-        return el?.matchParent(".workspace-split.mod-root, .hover-popover > .popover-content > .workspace-split");
+        return el?.matchParent(".workspace, .hover-popover > .popover-content > .workspace-split");
     }
 
 }

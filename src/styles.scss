@@ -26,6 +26,52 @@ settings:
         default: 350px
 */
 
+@use "sass:selector";
+
+$win-hidden-frame: "body.is-hidden-frameless";
+$win-native-frame: "body:not(.is-frameless)";
+$win-obsidian-frame: "body.is-frameless:not(.is-hidden-frameless)";
+
+$win-any: "body";
+$win-main: "body:not(.is-popout-window)";
+$win-popout: "body.is-popout-window";
+
+$win-has-titlebar: $win-obsidian-frame;
+$win-no-titlebar:  "#{$win-hidden-frame}, #{$win-native-frame}";
+
+$win-draggable-header: "body:not(.is-grabbing):not(.is-fullscreen)";
+
+
+@function when($s1, $selectors...) {
+    $res: $s1;
+    @each $sel in $selectors {
+        $res: selector.unify($res, $sel);
+    }
+    @return $res;
+}
+
+#{when($win-any)} {
+  // Default: allow space for toggle + controls
+  --pr-right-frame-space: calc(var(--ribbon-width) + var(--frame-right-space));
+}
+#{when($win-popout)} {
+  // Popout: no toggle, just controls
+  --pr-right-frame-space: var(--frame-right-space);
+}
+
+#{when($win-any, $win-obsidian-frame)},
+#{when($win-any, $win-native-frame)} {
+  // Visible title bar in popout - just toggle
+  --pr-right-frame-space: var(--ribbon-width);
+}
+
+#{when($win-popout, $win-obsidian-frame)},
+#{when($win-popout, $win-native-frame)} {
+  // Visible title bar in popout - no controls
+  --pr-right-frame-space: 0;
+}
+
+
 /* Ensure popovers are above the menu */
 .menu.pane-relief-history-menu ~ .popover.hover-popover {
     z-index: var(--layer-menu);
@@ -58,7 +104,7 @@ body:not(.obsidian-themepocalypse).titlebar-button.mod-forward.mod-active:not(:h
 { opacity: 0.75; }
 
 /* Maximizing */
-.workspace-split.mod-root.should-maximize,
+.workspace.should-maximize .workspace-split.mod-root,
 body > .popover.hover-popover .workspace-split.should-maximize
 {
     .workspace-leaf:not(.is-maximized),
@@ -73,17 +119,52 @@ body > .popover.hover-popover .workspace-split.should-maximize
       max-width: unset !important;
       left: unset !important;
     }
+    .workspace-tabs.has-maximized {
+      flex-basis: 100%;
+    }
     .workspace-leaf.is-maximized {
       flex-basis: calc(100% - 4px); // 4px is for scrollbar width
       .view-header {
         display: flex;
-        body.is-hidden-frameless:not(.is-fullscreen) & {
-          padding-left: var(--frame-left-space);
-          padding-right: var(--frame-right-space);
-        }
         .view-header-icon { display: inherit; }
       } // always show view header when maximized
     }
+}
+
+#pr-maximize-sb-toggle {
+  display: none;
+  position: fixed;
+  background: var(--tab-container-background);
+  right: 0;
+  top: 0;
+  padding-right: var(--size-4-2);
+  padding-left: var(--size-4-2);
+  .workspace.should-maximize ~ & {
+    display: block;
+    #{$win-hidden-frame} & {
+      right: var(--frame-right-space);
+    }
+    #{$win-obsidian-frame} & {
+      top: var(--titlebar-height);
+    }
+  }
+}
+
+
+.workspace-leaf.is-maximized .view-header {
+  .workspace:not(.is-right-sidedock-open) & {
+    // leave space for relocated right ribbon toggle
+    padding-right: calc(var(--pr-right-frame-space) + var(--size-4-2));
+  }
+  #{when($win-draggable-header, $win-hidden-frame)} & {
+    .view-header-title-container {
+      /* allow dragging of maximized view header */
+      -webkit-app-region: drag;
+      & > * {
+        -webkit-app-region: no-drag;
+      }
+    }
+  }
 }
 
 /* Sliding Panes */
@@ -101,21 +182,71 @@ body.is-mobile {
   --pr-sliding-panes-width: var(--pr-sliding-panes-mobile-width);
 }
 
+
+
+.prsp-tb-overlay {
+  /*
+    Overlay to ensure left-sidebar draggable area is draggable, even if
+    there's a non-draggable header underlaying it from a scrolled pane
+  */
+  display: block;
+  position: fixed;
+  pointer-events: none;
+  top: 0;
+  #{$win-obsidian-frame} & { top: var(--titlebar-height); }
+  height: var(--header-height);
+  width: 0;
+  -webkit-app-region: drag;
+
+  #{$win-draggable-header} .workspace.is-left-sidedock-open.is-sliding:not(.should-maximize) ~ & {
+    width: var(--pr-overlay-width, 0);
+    left:  var(--pr-overlay-left, 0);
+  }
+
+  #{$win-draggable-header} &::after {
+    /*
+      Overlay to ensure left-sidebar region is clickable, even if
+      there's a draggable header underlaying it from a scrolled pane
+    */
+    width: var(--pr-overlay-left, var(--ribbon-width));
+    height: var(--header-height);
+    left: 0;
+    display: block;
+    position: fixed;
+    content: "";
+    -webkit-app-region: no-drag;
+  }
+
+  .workspace:not(.should-maximize) ~ &::before {
+    /*
+      Overlay to ensure right-side window controls are clickable, even if
+      there's a draggable header underlaying them from a scrolled pane
+    */
+    right: 0;
+    display: block;
+    position: fixed;
+    width: var(--pr-right-frame-space);
+    height: var(--header-height);
+    content: "";
+    -webkit-app-region: no-drag;
+  }
+}
+
 .mod-root.is-sliding:not(.has-maximized) {
   overflow-x: auto;
   overflow-y: hidden;
 
   /* Keep right sidebar toggle visible on 0.16, courtesy @ebullient */
-  div.workspace-tabs.mod-top.mod-top-right-space .workspace-tab-header-container {
+  #{$win-main} & div.workspace-tabs.mod-top.mod-top-right-space .workspace-tab-header-container {
     padding-right: var(--ribbon-width);
     body.is-hidden-frameless:not(.is-fullscreen) & {
-      padding-right: calc(var(--ribbon-width) + var(--frame-right-space));
+      padding-right: var(--pr-right-frame-space);
     }
   }
 
   /* Allow enough space at top of right sidebar for right ribbon toggle to function */
   .workspace.is-right-sidedock-open & + .mod-right-split .workspace-tabs.mod-top .workspace-tab-header-container::after {
-    width: calc(var(--ribbon-width) + var(--frame-right-space));
+    width: var(--pr-right-frame-space);
   }
 
   div.sidebar-toggle-button.mod-right {
@@ -131,11 +262,6 @@ body.is-mobile {
     body.is-hidden-frameless:not(.is-fullscreen) & {
       right: var(--frame-right-space);
     }
-  }
-
-  .workspace-tabs.mod-top .workspace-tab-header-spacer {
-    // Turn off draggable space that can block other things in sliding region
-    -webkit-app-region: no-drag;
   }
 
   &>*:not(:last-child:nth-child(2)) { // don't apply when only one pane
