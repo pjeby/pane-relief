@@ -75,9 +75,9 @@ class SlidingPanesManager<T extends SlidingPanes> extends WindowManager<T> {
 
     requestOverlayUpdate = debounce(() => {
         if (!app.workspace.leftSplit.collapsed) {
-            const r = app.workspace.leftSplit.containerEl.find(".workspace-tabs.mod-top-left-space .workspace-tab-header-spacer").getBoundingClientRect();
-            this.overlay.style.setProperty("--pr-overlay-width", `${r.width}px`);
-            this.overlay.style.setProperty("--pr-overlay-left", `${r.left}px`);
+            const r = app.workspace.leftSplit.containerEl.find(".workspace-tabs.mod-top-left-space .workspace-tab-header-spacer")?.getBoundingClientRect();
+            if (r) this.overlay.style.setProperty("--pr-overlay-width", `${r.width}px`);
+            if (r) this.overlay.style.setProperty("--pr-overlay-left", `${r.left}px`);
         }
     }, 100, true);
 
