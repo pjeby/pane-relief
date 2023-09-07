@@ -9,6 +9,6 @@
     "@ophidian/build": "^1.0.1",
     "@ophidian/core": "git://github.com/ophidian-lib/core.git",
     "monkey-around": "^2.3.0",
-    "obsidian": "0.15.4"
+    "obsidian": "1.2.8"
   }
 }

@@ -275,7 +275,7 @@ export class HistoryManager extends Service {
         }));
 
         this.registerEvent(store.onLoadItem((item, state) => {
-            if (item instanceof WorkspaceLeaf && state[SERIAL_PROP]) {
+            if (item instanceof WorkspaceLeaf && state && state[SERIAL_PROP]) {
                 new History(item, state[SERIAL_PROP]).saveToNative();
             }
         }));
@@ -312,7 +312,7 @@ export class HistoryManager extends Service {
 
         this.register(around(app.workspace, {
         // Monkeypatch: keep Obsidian from pushing history in setActiveLeaf
-            setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc) {
+            setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc: any[]) {
                 const unsub = around(this, {
                     recordHistory(old) { return function (leaf: WorkspaceLeaf, _push: boolean, ...args: any[]) {
                         // Always update state in place

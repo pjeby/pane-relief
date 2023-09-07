@@ -1,12 +1,12 @@
 import { around } from "monkey-around";
 import { Notice, Plugin, setIcon, Workspace, WorkspaceLeaf } from "obsidian";
-import { defer, isLeafAttached, LayoutSetting, Service } from "@ophidian/core";
+import { defer, isLeafAttached, LayoutSetting, Service, o } from "@ophidian/core";
 import { addCommands, command } from "./commands";
 import { setTooltip } from "./Navigator";
 
 export class FocusLock extends Service {
 
-    setting = new LayoutSetting<boolean, Workspace>(this, "pane-relief:focus-lock").of(app.workspace);
+    setting = new LayoutSetting<boolean, o.Workspace>(this, "pane-relief:focus-lock").of(app.workspace);
 
     plugin = this.use(Plugin);
     statusEl = this.plugin.addStatusBarItem();
@@ -31,11 +31,11 @@ export class FocusLock extends Service {
         const self = this;
         // wrap setActiveLeaf and canNavigate to prevent select/activate
         this.register(around(app.workspace, {
-            setActiveLeaf(old) { return function(this: Workspace, leaf, pushHistory, focus) {
-                if (!self.isLocked || isMain(leaf)) return old.call(this, leaf, pushHistory, focus);
+            setActiveLeaf(old) { return function(this: Workspace, leaf, ...etc: any[]) {
+                if (!self.isLocked || isMain(leaf)) return old.call(this, leaf, ...etc);
                 // Handle the case where there was no prior active leaf
                 if (!this.activeLeaf || !isLeafAttached(this.activeLeaf))
-                    return old.call(this, this.getLeaf(), pushHistory, focus);
+                    return old.call(this, this.getLeaf(), ...etc);
             }},
             revealLeaf(old) {
                 return function(leaf: WorkspaceLeaf) {
@@ -98,7 +98,7 @@ export class FocusLock extends Service {
         }
         this.isLocked = shouldLock;
 
-        setIcon(this.iconEl, shouldLock ? "lucide-lock" : "lucide-unlock", 13);
+        setIcon(this.iconEl, shouldLock ? "lucide-lock" : "lucide-unlock");
         setTooltip(this.iconEl, shouldLock ?
             "Sidebar focus disabled: click to enable" :
             "Sidebar focus enabled: click to disable"
@@ -119,8 +119,5 @@ export function isMain(leaf: WorkspaceLeaf) {
 declare module "obsidian" {
     interface WorkspaceLeaf {
         canNavigate(): boolean
-    }
-    interface Notice {
-        noticeEl: HTMLDivElement
     }
 }

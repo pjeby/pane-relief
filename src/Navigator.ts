@@ -12,7 +12,6 @@ declare global {
 declare module "obsidian" {
     interface Menu {
         dom: HTMLElement
-        setUseNativeMenu?(flag: boolean): void;  // 0.16 to force HTML menu
     }
     interface MenuItem {
         dom: HTMLElement
@@ -313,9 +312,9 @@ export class Navigator extends Component {
         menu.showAtPosition({x: evt.clientX, y: evt.clientY + 20});
         menu.register(around(app.workspace, {setActiveLeaf(old) {
             // Don't allow a hover editor to auto-focus, so you can mod-click without targeting it
-            return function(leaf, pushHistory, focus) {
+            return function(leaf, ...args: any[]) {
                 if (leaf.containerEl.matchParent(".hover-editor")) return;
-                return old.call(this, leaf, pushHistory, focus);
+                return old.call(this, leaf, ...args);
             }
         }}));
         this.owner.historyIsOpen = true;
@@ -378,9 +377,9 @@ export class Navigator extends Component {
 }
 
 export function formatState(entry: HistoryEntry): FileInfo {
-    const {viewState: {type, state}, eState, path} = entry;
+    const {viewState: {type, state}, eState, path, raw} = entry;
     const file = path && app.vault.getAbstractFileByPath(path) as TFile;
-    const info = {icon: "", title: "", file, type, state, eState};
+    const info = {icon: raw?.icon ?? "", title: raw?.title ?? "" , file, type, state, eState};
 
     if (nonFileViews[type]) {
         [info.icon, info.title] = nonFileViews[type];
