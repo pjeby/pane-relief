@@ -11,7 +11,11 @@ export class FocusLock extends Service {
     plugin = this.use(Plugin);
     statusEl = this.plugin.addStatusBarItem();
     iconEl = this.statusEl.createSpan(
-        "pane-relief-focus-lock icon", e => {e.setAttribute("aria-label-position", "top")}
+        "pane-relief-focus-lock icon", e => {
+            e.setAttribute("aria-label-position", "top");
+            e.setAttribute("aria-label-delay", "0");
+            e.setAttribute("data-tooltip-position", "top");
+        }
     );
 
     isLocked?: boolean = null;
@@ -33,6 +37,7 @@ export class FocusLock extends Service {
         this.register(around(app.workspace, {
             setActiveLeaf(old) { return function(this: Workspace, leaf, ...etc: any[]) {
                 if (!self.isLocked || isMain(leaf)) return old.call(this, leaf, ...etc);
+                app.workspace.revealLeaf(leaf);  // allow visibility
                 // Handle the case where there was no prior active leaf
                 if (!this.activeLeaf || !isLeafAttached(this.activeLeaf))
                     return old.call(this, this.getLeaf(), ...etc);

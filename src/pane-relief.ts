@@ -84,10 +84,10 @@ export default class PaneRelief extends Plugin {
                 );
             }));
             this.registerEvent(
-                app.workspace.on("active-leaf-change", leaf => this.nav.forLeaf(leaf).display(leaf))
+                app.workspace.on("active-leaf-change", leaf => this.nav.forLeaf(leaf)?.display(leaf))
             );
             this.registerEvent(
-                app.workspace.on("pane-relief:update-history", (leaf, history) => this.nav.forLeaf(leaf).onUpdateHistory(leaf, history))
+                app.workspace.on("pane-relief:update-history", (leaf, history) => this.nav.forLeaf(leaf)?.onUpdateHistory(leaf, history))
             );
         });
         addCommands(this);
