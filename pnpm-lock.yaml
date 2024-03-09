@@ -1,14 +1,14 @@
-lockfileVersion: 5.3
+lockfileVersion: 5.4
 
 specifiers:
-  '@ophidian/build': ^1.1.4
-  '@ophidian/core': git://github.com/ophidian-lib/core.git
+  '@ophidian/build': ^1.2.1
+  '@ophidian/core': 0.0.21
   monkey-around: ^2.3.0
   obsidian: 1.2.8
 
 devDependencies:
-  '@ophidian/build': 1.1.4
-  '@ophidian/core': github.com/ophidian-lib/core/572afb9b2a5aa9a4f539bd6901f9fc10a5e722f6
+  '@ophidian/build': 1.2.1
+  '@ophidian/core': 0.0.21
   monkey-around: 2.3.0
   obsidian: 1.2.8
 
@@ -240,8 +240,8 @@ packages:
       fastq: 1.13.0
     dev: true
 
-  /@ophidian/build/1.1.4:
-    resolution: {integrity: sha512-+lMWwN5uiyMNEwtMUQdqyXPM18kyQWlxi1FvTK6OgodXqTJW3YEaFKAPag0mKVhFy0rV6Xvt6Lmfv9zVu1RsJw==}
+  /@ophidian/build/1.2.1:
+    resolution: {integrity: sha512-ulefYLGwlWmsP5WgkOunujhU57dB5slENQ7VvwFh0h0Yk6id4Osg3jN0yONtB9gF6awfjzfK4OxzfOhmuzWx7g==}
     dependencies:
       builtin-modules: 3.3.0
       copy-newer: 2.1.2
@@ -250,6 +250,22 @@ packages:
       esbuild-plugin-sass: 1.0.1_esbuild@0.17.6
       fs-extra: 10.1.0
       monkey-around: 2.3.0
+      sass: 1.47.0
+    dev: true
+
+  /@ophidian/core/0.0.21:
+    resolution: {integrity: sha512-xCx+8wlCrR4tOC/4zHKnne2nE9wAf7zZY9huFG7uQnV9a1SbGmy3h5evoHSu1FyJK+cuWaws0QmhqSz9Xx8pcw==}
+    dependencies:
+      '@preact/signals-core': 1.4.0
+      defaults: 2.0.1
+      i18next: 20.6.1
+      monkey-around: 2.3.0
+      obsidian: 1.2.8
+      to-use: 0.3.3
+      wonka: 6.3.4
+    transitivePeerDependencies:
+      - '@codemirror/state'
+      - '@codemirror/view'
     dev: true
 
   /@preact/signals-core/1.4.0:
@@ -866,8 +882,8 @@ packages:
       is-number: 7.0.0
     dev: true
 
-  /to-use/0.3.2:
-    resolution: {integrity: sha512-BsjW4JlQkMrZ9THFFkC4w5Yv3+dXAnd6Ycrm78heY3rNN6LxkBG0c0BQmn84qlMWxIkny1KmphU5wPMmRwMGhQ==}
+  /to-use/0.3.3:
+    resolution: {integrity: sha512-i5hrYhcDyrjl4tF2EvZnmL8VAMdMYnMFeX1bIF0ekn2gKgs76UhZcHt+hLIUKh0fIii+Ix6uUp5W6yYlU5+Z8A==}
     dev: true
 
   /universalify/2.0.0:
@@ -879,22 +895,10 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
 
-  /wrappy/1.0.2:
-    resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
+  /wonka/6.3.4:
+    resolution: {integrity: sha512-CjpbqNtBGNAeyNS/9W6q3kSkKE52+FjIj7AkFlLr11s/VWGUu6a2CdYSdGxocIhIVjaW/zchesBQUKPVU69Cqg==}
     dev: true
 
-  github.com/ophidian-lib/core/572afb9b2a5aa9a4f539bd6901f9fc10a5e722f6:
-    resolution: {tarball: https://codeload.github.com/ophidian-lib/core/tar.gz/572afb9b2a5aa9a4f539bd6901f9fc10a5e722f6}
-    name: '@ophidian/core'
-    version: 0.0.20
-    dependencies:
-      '@preact/signals-core': 1.4.0
-      defaults: 2.0.1
-      i18next: 20.6.1
-      monkey-around: 2.3.0
-      obsidian: 1.2.8
-      to-use: 0.3.2
-    transitivePeerDependencies:
-      - '@codemirror/state'
-      - '@codemirror/view'
+  /wrappy/1.0.2:
+    resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
     dev: true

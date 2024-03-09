@@ -1,4 +1,4 @@
-import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs} from 'obsidian';
+import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs, debounce} from 'obsidian';
 import {domLeaves, hasTabHistory, History, HistoryEntry} from "./History";
 import {PerWindowComponent} from "@ophidian/core";
 import {around} from 'monkey-around';
@@ -31,7 +31,17 @@ declare module "obsidian" {
     interface Workspace {
         duplicateLeaf(leaf: WorkspaceLeaf, kind: boolean|"window"|"pane"|"tab"): Promise<WorkspaceLeaf>
     }
+    interface App {
+        adaptToSystemTheme(): void;
+    }
+    interface Vault {
+        getConfig(key: string): any;
+    }
 }
+
+const adaptTheme = debounce(() => {
+    if (app.vault.getConfig("theme") === "system") app.adaptToSystemTheme();
+}, 200, true);
 
 interface FileInfo {
     icon: string
@@ -141,6 +151,8 @@ export class Navigation extends PerWindowComponent {
             }
             return false;
         }
+
+        this.registerDomEvent(this.win.matchMedia("(prefers-color-scheme: dark)") as any, "change", adaptTheme);
 
         app.workspace.onLayoutReady(() => {
             this.addChild(this.back    = new Navigator(this, "back", -1));
