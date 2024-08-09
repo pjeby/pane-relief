@@ -276,6 +276,7 @@ export class Navigator extends Component {
                 this.owner.win.document.body,
                 "contextmenu",
                 `.view-header > .view-actions > .view-action[class*="app:go-${this.kind}"],
+                .view-header-left > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child,
                  .view-header > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child`,
                 (evt, target) => {
                     const el = target.matchParent(".workspace-leaf");
