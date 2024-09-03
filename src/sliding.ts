@@ -47,7 +47,7 @@ export class SlidingPanes extends PerWindowComponent {
             this.container.focus();
         }
         if (options.active) {
-            (leaf.containerEl.matchParent(".workspace-tabs") ?? leaf.containerEl).scrollIntoView({behavior: "smooth"});
+            (leaf.containerEl.matchParent(".workspace-tabs") ?? leaf.containerEl).scrollIntoView();
         }
         this.manager.options.defaultValue = options;
     }

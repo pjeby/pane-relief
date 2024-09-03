@@ -33,7 +33,7 @@ export class Maximizer extends Service {
 
         const self = this
         this.register(around(app.workspace, {
-            setActiveLeaf(old) { return function setActiveLeaf(leaf, pushHistory, focus) {
+            setActiveLeaf(old) { return function setActiveLeaf(leaf, ...args: any[]) {
                 // We have to do this here so that MarkdownView can be focused in the new pane
                 const parent = self.parentForLeaf(leaf), oldParent = self.parentForLeaf(app.workspace.activeLeaf);
                 if (
@@ -46,17 +46,9 @@ export class Maximizer extends Service {
                     app.commands.executeCommandById("obsidian-hover-editor:restore-active-popover");
                 }
                 if (isMain(leaf) && parent) self.refresh(parent, parent.hasClass("should-maximize") ? leaf.containerEl : null);
-                return old.call(this, leaf, pushHistory, focus);
+                return old.call(this, leaf, ...args);
             }}
         }));
-        this.register(around(WorkspaceTabs.prototype, {
-            onContainerScroll(old) {
-                return function() {
-                    // Don't hide tabs while we're switching modes
-                    if (!self.changing && this.containerEl.isShown()) return old.call(this)
-                }
-            }
-        }))
 
         // Replace the right sidebar toggle that gets hidden during maximize
         app.workspace.onLayoutReady(() => {
@@ -106,7 +98,8 @@ export class Maximizer extends Service {
                 return;
             }
         }
-        if (parent) this.refresh(parent, toggleClass(parent, "should-maximize") ? leaf.containerEl : null);
+        let hadMax = !toggleClass(parent, "should-maximize");
+        if (parent) this.refresh(parent,  hadMax ? null : leaf.containerEl, hadMax);
     }
 
     lastMaximized(parent: Element) {
@@ -114,10 +107,13 @@ export class Maximizer extends Service {
     }
 
     fixSlidingPanes = debounce(() => {
-        const parent = app.workspace.activeLeaf.parentSplit;
-        if (requireApiVersion("0.16.2") && parent instanceof WorkspaceTabs && parent.isStacked) {
-            parent.containerEl.win.requestAnimationFrame(() => {
+        activeWindow.requestAnimationFrame(() => {
+            const {activeLeaf} = app.workspace;
+            if (!activeLeaf) return;
+            const parent = activeLeaf.parentSplit;
+            if (requireApiVersion("0.16.2") && parent instanceof WorkspaceTabs && parent.isStacked) {
                 const remove = around(parent.tabsContainerEl, {
+                    // Kill .behavior flag so that the *whole* tab scrolls to position
                     scrollTo(old) { return function(optionsOrX, y?: number) {
                         if (typeof optionsOrX === "object") {
                             delete optionsOrX.behavior;
@@ -127,20 +123,20 @@ export class Maximizer extends Service {
                     }}
                 });
                 try { parent.scrollIntoView(parent.currentTab); } finally { remove(); this.changing = false; }
-            });
-        } else {
-            app.workspace.requestActiveLeafEvents();
-            this.changing = false;
-        }
+            } else {
+                this.changing = false;
+            }
+            activeLeaf.containerEl.scrollIntoView();
+        });
     }, 1, true);
 
     refresh(
         parent: Element,
         leafEl: Element =
-            parent.hasClass("should-maximize") ? this.lastMaximized(parent) : null
+            parent.hasClass("should-maximize") ? this.lastMaximized(parent) : null,
+        hadMax = parent.hasClass("has-maximized")
     ) {
         this.changing = true;
-        const hadMax = parent.hasClass("has-maximized");
         parent.findAllSelf(".workspace-split, .workspace-tabs").forEach(split => {
             if (split === parent || this.parentFor(split) === parent)
                 toggleClass(split, "has-maximized", leafEl ? split.contains(leafEl): false);

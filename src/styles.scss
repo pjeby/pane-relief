@@ -287,7 +287,8 @@ body.obsidian-themepocalypse { --pr-pane-number-bottom: 0px; }
 body.pane-relief-pane-numbering {
   /* Number panes in their headers */
   .workspace-split .workspace-leaf .view-header-icon { min-width: fit-content; display: inherit; }
-  .workspace-split .workspace-leaf .view-header-icon::before
+  .workspace-split .workspace-leaf .view-header-icon::before,
+  .workspace-split .workspace-leaf .view-header-left .view-header-nav-buttons::before
   {
       content: "";
       display: inline-flex;
@@ -295,7 +296,8 @@ body.pane-relief-pane-numbering {
       min-inline-size: 1em;
       bottom: var(--pr-pane-number-bottom);
   }
-  .workspace-split .workspace-leaf.has-pane-relief-label .view-header-icon::before
+  .workspace-split .workspace-leaf.has-pane-relief-label .view-header-icon::before,
+  .workspace-split .workspace-leaf.has-pane-relief-label .view-header-left .view-header-nav-buttons::before
   {
       counter-reset: pane-number var(--pane-relief-label);
       content: counter(pane-number);
