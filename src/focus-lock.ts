@@ -41,6 +41,8 @@ export class FocusLock extends Service {
                 // Handle the case where there was no prior active leaf
                 if (!this.activeLeaf || !isLeafAttached(this.activeLeaf))
                     return old.call(this, this.getLeaf(), ...etc);
+                // Obsidian 1.7.x handles search focusing differently; this restores the old behavior
+                if (leaf.view?.getViewType() === "search" && etc[0] === true || etc[0]?.focus) leaf.setEphemeralState({focus: true});
             }},
             revealLeaf(old) {
                 return function(leaf: WorkspaceLeaf) {
