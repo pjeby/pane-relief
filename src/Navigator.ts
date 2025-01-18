@@ -1,5 +1,5 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs, debounce} from 'obsidian';
-import {domLeaves, hasTabHistory, History, HistoryEntry} from "./History";
+import {domLeaves, History, HistoryEntry} from "./History";
 import {PerWindowComponent} from "@ophidian/core";
 import {around} from 'monkey-around';
 
@@ -40,7 +40,7 @@ declare module "obsidian" {
 }
 
 const adaptTheme = debounce(() => {
-    if (app.vault.getConfig("theme") === "system") app.adaptToSystemTheme();
+    if (app.vault.getConfig("theme") === "system") app.adaptToSystemTheme?.();
 }, 200, true);
 
 interface FileInfo {
@@ -152,7 +152,9 @@ export class Navigation extends PerWindowComponent {
             return false;
         }
 
-        this.registerDomEvent(this.win.matchMedia("(prefers-color-scheme: dark)") as any, "change", adaptTheme);
+        // Workaround for https://forum.obsidian.md/t/detached-window-doesnt-change-color-scheme-automatically/42642/10
+        // (which was fixed in Obsidian 1.6)
+        requireApiVersion("1.6.0") || this.registerDomEvent(this.win.matchMedia("(prefers-color-scheme: dark)") as any, "change", adaptTheme);
 
         app.workspace.onLayoutReady(() => {
             this.addChild(this.back    = new Navigator(this, "back", -1));
@@ -196,7 +198,7 @@ export class Navigation extends PerWindowComponent {
         if (back) this.back.updateDisplay(history, back);
 
         // Add labels for 0.16.3 Tab headers
-        if (hasTabHistory) {
+        if (true) {
             const actions = leaf.containerEl.find(".view-header > .view-header-nav-buttons");
             const fwd = actions?.find('button:last-child');
             const back = actions?.find('button:first-child');
@@ -343,7 +345,7 @@ export class Navigator extends Component {
             i.setIcon(info.icon).setTitle(prefix + info.title).onClick(e => {
                 // Check for ctrl/cmd/middle button and split leaf + copy history
                 if (Keymap.isModEvent(e)) {
-                    if (hasTabHistory && history.leaf) {
+                    if (history.leaf) {
                         // Use the new duplication API because native history doesn't store current state
                         app.workspace.duplicateLeaf(history.leaf, Keymap.isModEvent(e)).then(leaf => {
                             History.forLeaf(leaf).go((idx+1) * dir, true);

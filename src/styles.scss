@@ -131,6 +131,19 @@ body > .popover.hover-popover .workspace-split.should-maximize
     }
 }
 
+/* Restore 1.5.x view header icons (for maximized views) */
+.view-header .view-header-icon {
+  display: none;
+  padding: var(--size-2-2);
+  margin-right: var(--size-2-3);
+  color: var(--text-muted);
+  align-self: center;
+  cursor: grab;
+}
+.view-header .view-header-icon:active {
+  cursor: grabbing;
+}
+
 #pr-maximize-sb-toggle {
   display: none;
   position: fixed;
@@ -288,7 +301,7 @@ body.pane-relief-pane-numbering {
   /* Number panes in their headers */
   .workspace-split .workspace-leaf .view-header-icon { min-width: fit-content; display: inherit; }
   .workspace-split .workspace-leaf .view-header-icon::before,
-  .workspace-split .workspace-leaf .view-header-left .view-header-nav-buttons::before
+  .workspace-split .workspace-leaf .view-header-left:first-child .view-header-nav-buttons::before
   {
       content: "";
       display: inline-flex;
@@ -297,7 +310,7 @@ body.pane-relief-pane-numbering {
       bottom: var(--pr-pane-number-bottom);
   }
   .workspace-split .workspace-leaf.has-pane-relief-label .view-header-icon::before,
-  .workspace-split .workspace-leaf.has-pane-relief-label .view-header-left .view-header-nav-buttons::before
+  .workspace-split .workspace-leaf.has-pane-relief-label .view-header-left:first-child .view-header-nav-buttons::before
   {
       counter-reset: pane-number var(--pane-relief-label);
       content: counter(pane-number);

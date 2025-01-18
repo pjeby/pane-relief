@@ -1,12 +1,11 @@
-import {HistoryState, Notice, requireApiVersion, TAbstractFile, WorkspaceLeaf} from 'obsidian';
-import {around} from "monkey-around";
-import {LayoutStorage, Service, windowEvent} from "@ophidian/core";
+import { HistoryState, Notice, TAbstractFile, WorkspaceLeaf } from 'obsidian';
+import { around } from "monkey-around";
+import { LayoutStorage, Service } from "@ophidian/core";
 import { leafName } from './pane-relief';
 import { formatState } from './Navigator';
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";
-export const hasTabHistory = requireApiVersion("0.16.3");
 
 declare module "obsidian" {
     interface Workspace {
@@ -162,7 +161,6 @@ export class History {
 
     pos: number
     stack: HistoryEntry[]
-    hadTabs = hasTabHistory;
 
     constructor(public leaf?: WorkspaceLeaf, {pos, stack}: SerializableHistory = {pos:0, stack:[]}) {
         if (leaf) leaf[HIST_ATTR] = this;   // prevent recursive lookups
@@ -173,7 +171,7 @@ export class History {
 
     saveToNative(): this {
         const nativeHistory = this.leaf?.history;
-        if (!nativeHistory || !hasTabHistory) return this;
+        if (!nativeHistory) return this;
         const stack = this.stack.map(entry => entry.asNative);
         nativeHistory.deserialize({
             backHistory: stack.slice(this.pos+1).reverse(),
@@ -184,7 +182,7 @@ export class History {
 
     loadFromNative(): this {
         const history = this.leaf?.history;
-        if (!history || !hasTabHistory) return this;
+        if (!history) return this;
         const stack: typeof history.backHistory = [].concat(
             history.forwardHistory.slice().filter(s => s),
             {state: {}, eState: {}},
@@ -232,7 +230,7 @@ export class History {
         // prevent wraparound
         const newPos = Math.max(0, Math.min(this.pos - by, this.stack.length - 1));
         if (force || newPos !== this.pos) {
-            if (this.leaf.history && hasTabHistory) {
+            if (this.leaf.history) {
                 this.pos = newPos;
                 this.leaf.history.go(by);
             } else this.goto(newPos);
@@ -280,7 +278,7 @@ export class HistoryManager extends Service {
             }
         }));
 
-        if (hasTabHistory) {
+        if (true) {
             // Forward native tab history events to our own implementation
             this.register(around(WorkspaceLeaf.prototype, {
                 trigger(old) { return function trigger(name, ...data) {
@@ -294,65 +292,7 @@ export class HistoryManager extends Service {
             }));
 
             // Incorporate any prior history state (e.g. on plugin update)
-            if (app.workspace.layoutReady) app.workspace.iterateAllLeaves(leaf => { History.forLeaf(leaf); })
-
-            // Skip most actual history replacement if native history is tab-based
-            return;
+            app.workspace.onLayoutReady(() => app.workspace.iterateAllLeaves(leaf => { leaf.trigger("history-change") }))
         }
-
-        // Monkeypatch: check for popstate events (to suppress them)
-        this.register(around(WorkspaceLeaf.prototype, {
-            setViewState(old) { return function setViewState(vs, es){
-                if (vs.popstate && window.event?.type === "popstate") {
-                    return Promise.resolve();
-                }
-                return old.call(this, vs, es);
-            }}
-        }));
-
-        this.register(around(app.workspace, {
-        // Monkeypatch: keep Obsidian from pushing history in setActiveLeaf
-            setActiveLeaf(old) { return function setActiveLeaf(leaf, ...etc: any[]) {
-                const unsub = around(this, {
-                    recordHistory(old) { return function (leaf: WorkspaceLeaf, _push: boolean, ...args: any[]) {
-                        // Always update state in place
-                        return old.call(this, leaf, false, ...args);
-                    }; }
-                });
-                try {
-                    return old.call(this, leaf, ...etc);
-                } finally {
-                    unsub();
-                }
-            }},
-        }));
-
-        function isSyntheticHistoryEvent(button: number) {
-            return !!windowEvent((_, event) => {
-                if (event.type === "mousedown" && (event as MouseEvent).button === button) {
-                    event.preventDefault();
-                    event.stopImmediatePropagation();
-                    return true;
-                }
-            });
-        }
-
-        // Proxy the window history with a wrapper that delegates to the active leaf's History object,
-        const realHistory = window.history;
-        this.register(() => (window as any).history = realHistory);
-        Object.defineProperty(window, "history", { enumerable: true, configurable: true, writable: true, value: {
-            get state()      { return History.current().state; },
-            get length()     { return History.current().length; },
-
-            back()    { if (!isSyntheticHistoryEvent(3)) this.go(-1); },
-            forward() { if (!isSyntheticHistoryEvent(4)) this.go( 1); },
-            go(by: number)    { History.current().go(by); },
-
-            replaceState(state: PushState, title: string, url: string){ History.current().replaceState(state, title, url); },
-            pushState(state: PushState, title: string, url: string)   { History.current().pushState(state, title, url); },
-
-            get scrollRestoration()    { return realHistory.scrollRestoration; },
-            set scrollRestoration(val) { realHistory.scrollRestoration = val; },
-        }});
     }
 }

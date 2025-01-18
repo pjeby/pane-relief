@@ -1,6 +1,6 @@
 import { Service, toggleClass } from "@ophidian/core";
 import { around } from "monkey-around";
-import { debounce, requireApiVersion, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
+import { debounce, requireApiVersion, WorkspaceLeaf, WorkspaceTabs, ItemView, setIcon, setTooltip, View } from "obsidian";
 import { isMain } from "./focus-lock";
 
 declare module "obsidian" {
@@ -73,6 +73,23 @@ export class Maximizer extends Service {
                 }
             }));
         })
+
+        // Restore pre-1.6 view header icons so you can drag maximized views
+        this.register(around(ItemView.prototype, {
+            load(old) {
+                return function(this: View) {
+                    if (!this.iconEl) {
+                        const iconEl = this.iconEl = this.headerEl.createDiv("clickable-icon view-header-icon")
+                        this.headerEl.prepend(iconEl)
+                        iconEl.draggable = true
+                        iconEl.addEventListener("dragstart", e => { this.app.workspace.onDragLeaf(e, this.leaf) })
+                        setIcon(iconEl, this.getIcon())
+                        setTooltip(iconEl, "Drag to rearrange")
+                    }
+                    return old.call(this)
+                }
+            }
+        }))
     }
 
     onunload() {
@@ -169,4 +186,15 @@ export class Maximizer extends Service {
         return el?.matchParent(".workspace, .hover-popover > .popover-content > .workspace-split");
     }
 
+}
+
+declare module "obsidian" {
+    interface Workspace {
+        onDragLeaf(event: MouseEvent, leaf: WorkspaceLeaf): void;
+    }
+    interface View {
+        iconEl: HTMLElement;
+        headerEl: HTMLElement;
+    }
+    export function setTooltip(el: HTMLElement, tooltip: string, options?: TooltipOptions): void;
 }
