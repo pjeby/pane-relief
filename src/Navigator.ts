@@ -271,22 +271,30 @@ export class Navigator extends Component {
         }
         this.register(() => this.containerEl.removeEventListener("click", onClick, true));
         this.containerEl.addEventListener("click", onClick, true);
+
+        const matchButton = `.view-header > .view-actions > .view-action[class*="app:go-${this.kind}"],
+        .view-header-left > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child,
+        .view-header > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child`
         this.register(
             // Support "Customizable Page Header and Title Bar" buttons (0.15+)
             // and built-in per-tab history (0.16.3+)
             onElement(
-                this.owner.win.document.body,
-                "contextmenu",
-                `.view-header > .view-actions > .view-action[class*="app:go-${this.kind}"],
-                .view-header-left > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child,
-                 .view-header > .view-header-nav-buttons > button:${this.dir < 0 ? "first" : "last"}-child`,
-                (evt, target) => {
+                this.owner.win.document.body, "contextmenu", matchButton, (evt, target) => {
                     const el = target.matchParent(".workspace-leaf");
                     const leaf = this.owner.leaves().filter(leaf => leaf.containerEl === el).pop();
                     if (!leaf) return;
                     evt.preventDefault();
                     evt.stopImmediatePropagation();
                     this.openMenu(evt, History.forLeaf(leaf));
+                }, {capture: true}
+            )
+        );
+        // 1.8 treats *any* button click as navigation, even right-click  :-(
+        if (requireApiVersion("1.8")) this.register(
+            onElement(
+                this.owner.win.document.body, "auxclick", matchButton, (evt) => {
+                    // Block right-click from triggering navigation
+                    if (evt.button === 2) evt.stopImmediatePropagation();
                 }, {capture: true}
             )
         );
