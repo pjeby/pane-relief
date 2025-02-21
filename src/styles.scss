@@ -245,6 +245,14 @@ body.is-mobile {
   }
 }
 
+/* Allow enough space at top of right sidebar for right ribbon toggle to
+   function and all tabs to be reachable by scrolling */
+.mod-root.is-sliding, .mod-root.has-maximized {
+   .workspace.is-right-sidedock-open & + .mod-right-split .workspace-tabs.mod-top .workspace-tab-header-spacer {
+    min-width: var(--ribbon-width);
+  }
+}
+
 .mod-root.is-sliding:not(.has-maximized) {
   overflow-x: auto;
   overflow-y: hidden;
@@ -255,11 +263,6 @@ body.is-mobile {
     body.is-hidden-frameless:not(.is-fullscreen) & {
       padding-right: var(--pr-right-frame-space);
     }
-  }
-
-  /* Allow enough space at top of right sidebar for right ribbon toggle to function */
-  .workspace.is-right-sidedock-open & + .mod-right-split .workspace-tabs.mod-top .workspace-tab-header-container::after {
-    width: var(--pr-right-frame-space);
   }
 
   div.sidebar-toggle-button.mod-right {
