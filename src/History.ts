@@ -1,4 +1,4 @@
-import { HistoryState, Notice, TAbstractFile, WorkspaceLeaf } from 'obsidian';
+import { HistoryState, Notice, Platform, TAbstractFile, WorkspaceLeaf, debounce } from 'obsidian';
 import { around } from "monkey-around";
 import { LayoutStorage, Service } from "@ophidian/core";
 import { leafName } from './pane-relief';
@@ -278,6 +278,27 @@ export class HistoryManager extends Service {
             }
         }));
 
+        const self = this
+
+        // On Linux, you can receive an app-command on forward/back mouse clicks
+        // that Obsidian translates to forward/back on the active leaf.  We
+        // block this by debouncing the nav and checking for recent mouse
+        // activity.  (Because the app-command can happen before *or* after the
+        // pointerdown, we debounce for 10ms and only trigger if there's been no
+        // mouse history button activity in the previous )
+        //
+        if (Platform.isLinux && Platform.isDesktopApp) {
+            function blockDoubleHistory(old: () => void) {
+                return debounce(function () {
+                    (Date.now() - self.lastButtonActivity < 50) || old.call(this)
+                }, 10)
+            }
+            this.register(around(window.history, {
+                forward: blockDoubleHistory,
+                back: blockDoubleHistory,
+            }))
+        }
+
         if (true) {
             // Forward native tab history events to our own implementation
             this.register(around(WorkspaceLeaf.prototype, {
@@ -294,5 +315,11 @@ export class HistoryManager extends Service {
             // Incorporate any prior history state (e.g. on plugin update)
             app.workspace.onLayoutReady(() => app.workspace.iterateAllLeaves(leaf => { leaf.trigger("history-change") }))
         }
+    }
+
+    lastButtonActivity = 0
+
+    onHistoryButtonActivity() {
+        this.lastButtonActivity = Date.now()
     }
 }

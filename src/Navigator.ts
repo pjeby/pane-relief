@@ -1,5 +1,5 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs, debounce} from 'obsidian';
-import {domLeaves, History, HistoryEntry} from "./History";
+import {domLeaves, History, HistoryEntry, HistoryManager} from "./History";
 import {PerWindowComponent} from "@ophidian/core";
 import {around} from 'monkey-around';
 
@@ -134,9 +134,10 @@ export class Navigation extends PerWindowComponent {
             this.win.removeEventListener("pointerdown", historyHandler, true);
         });
 
-        const self = this;
+        const self = this, hm = this.use(HistoryManager);
         function historyHandler(e: MouseEvent) {
             if (e.button !== 3 && e.button !== 4) return;
+            hm.onHistoryButtonActivity()
             e.preventDefault(); e.stopImmediatePropagation();  // prevent default behavior
             const target = (e.target as HTMLElement).matchParent(".workspace-leaf, .workspace-tab-header");
             if (target && e.type === "pointerup") {
