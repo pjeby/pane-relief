@@ -1,10 +1,12 @@
 {
   "name": "pane-relief",
+  "type": "module",
   "scripts": {
     "dev": "node ophidian.config.mjs dev",
     "build": "node ophidian.config.mjs production"
   },
   "license": "ISC",
+  "packageManager": "pnpm@7.33.6",
   "devDependencies": {
     "@ophidian/build": "^1.2.1",
     "@ophidian/core": "0.0.21",

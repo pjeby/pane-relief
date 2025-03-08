@@ -1,8 +1,8 @@
 import { HistoryState, Notice, Platform, TAbstractFile, WorkspaceLeaf, debounce } from 'obsidian';
 import { around } from "monkey-around";
 import { LayoutStorage, Service } from "@ophidian/core";
-import { leafName } from './pane-relief';
-import { formatState } from './Navigator';
+import { leafName } from './pane-relief.ts';
+import { formatState } from './Navigator.ts';
 
 const HIST_ATTR = "pane-relief:history-v1";
 const SERIAL_PROP = "pane-relief:history-v1";

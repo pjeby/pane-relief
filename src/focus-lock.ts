@@ -1,8 +1,8 @@
 import { around } from "monkey-around";
 import { Notice, Plugin, setIcon, Workspace, WorkspaceLeaf } from "obsidian";
 import { defer, isLeafAttached, LayoutSetting, Service, o } from "@ophidian/core";
-import { addCommands, command } from "./commands";
-import { setTooltip } from "./Navigator";
+import { addCommands, command } from "./commands.ts";
+import { setTooltip } from "./Navigator.ts";
 
 export class FocusLock extends Service {
 

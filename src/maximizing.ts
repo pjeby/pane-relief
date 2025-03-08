@@ -1,7 +1,7 @@
 import { Service, toggleClass } from "@ophidian/core";
 import { around } from "monkey-around";
 import { debounce, requireApiVersion, WorkspaceLeaf, WorkspaceTabs, ItemView, setIcon, setTooltip, View } from "obsidian";
-import { isMain } from "./focus-lock";
+import { isMain } from "./focus-lock.ts";
 
 declare module "obsidian" {
     interface Workspace {

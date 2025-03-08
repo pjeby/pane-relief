@@ -1,5 +1,5 @@
 import {Menu, Keymap, Component, WorkspaceLeaf, TFile, MenuItem, requireApiVersion, WorkspaceTabs, debounce} from 'obsidian';
-import {domLeaves, History, HistoryEntry, HistoryManager} from "./History";
+import {domLeaves, History, HistoryEntry, HistoryManager} from "./History.ts";
 import {PerWindowComponent} from "@ophidian/core";
 import {around} from 'monkey-around';
 

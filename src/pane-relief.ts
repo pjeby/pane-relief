@@ -1,11 +1,11 @@
 import { Plugin, requireApiVersion, TFile, Workspace, WorkspaceLeaf, WorkspaceTabs } from "obsidian";
 import { numWindows, use, StyleSettings } from "@ophidian/core";
-import { addCommands, command } from "./commands";
-import { FocusLock } from "./focus-lock";
-import { History, HistoryManager } from "./History";
-import { Maximizer } from "./maximizing";
-import { Navigation, Navigator } from "./Navigator";
-import { SlidingPanes } from "./sliding";
+import { addCommands, command } from "./commands.ts";
+import { FocusLock } from "./focus-lock.ts";
+import { History, HistoryManager } from "./History.ts";
+import { Maximizer } from "./maximizing.ts";
+import { Navigation, Navigator } from "./Navigator.ts";
+import { SlidingPanes } from "./sliding.ts";
 
 import "./styles.scss";
 import { around } from "monkey-around";
